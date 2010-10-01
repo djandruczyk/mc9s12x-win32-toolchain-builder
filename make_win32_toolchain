@@ -33,7 +33,7 @@ echo "Target is ${DSTDIR}"
 # First: build binutils for 9s12x
 # checkout seank's FreeScale-s12x-binutils
 if [ ! -d FreeScale-s12x-binutils ] ; then
-	git clone http://github.com/djandruczyk/FreeScale-s12x-binutils.git 
+	git clone http://github.com/seank/FreeScale-s12x-binutils.git 
 fi
 pushd FreeScale-s12x-binutils 
 git pull
@@ -145,12 +145,7 @@ if [ $binutils_direct_hc11_res -eq 0 ] && \
 	[ $gcc_cross_res -eq 0 ] && \
 	[ $newlib_direct_res -eq 0 ] ; then
 	echo "Everything compiled OK, installing prepackaged windows binaries"
-	pushd $DSTDIR
-	for pkg in $PKGS ; do
-		unzip $CWD/$pkg
-	done
-	rm -rf contrib manifest
-	popd
+	add_win32_pkgs
 fi
 }
 
@@ -180,8 +175,17 @@ function download_win32 {
 }
 
 
+function add_win32_pkgs {
+	pushd $DSTDIR
+	for pkg in $PKGS ; do
+		sudo unzip -o $CWD/$pkg
+	done
+	sudo rm -rf contrib manifest
+	popd
+}
+
 function build_win32_pkg {
-	ISS_FILE=dave/git/FreeEMS-compiler/FreeEMS-toolchain.iss
+	ISS_FILE=dave/git/FreeEMS-win32-toolchain-builder/FreeEMS-toolchain.iss
 	DRIVE=L
 
 	wine ~/.wine/drive_c/Program\ Files/Inno\ Setup\ 5/ISCC.exe "${DRIVE}":/"${ISS_FILE}"
@@ -213,6 +217,7 @@ case "$1" in
 	download_win32
 	;;
 	buildpkg)
+	add_win32_pkgs
 	build_win32_pkg
 	;;
 	clean)
