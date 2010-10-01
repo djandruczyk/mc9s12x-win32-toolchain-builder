@@ -9,13 +9,20 @@
 # the cross/uncross cripts)
 #
 
+# ADJUST THIS TO SUIT
+# NOTE: you'll also need to edit FreeEMS-toolchain.iss to suite your 
+# wine configuration and target paths, if you use "all" or "buildpkg"
+
+DSTDIR=/target2
+
+
+
 #Additonal Pakages needed to be added..
 PKGS="coreutils-5.3.0-bin.zip coreutils-5.3.0-dep.zip make-3.81-bin.zip zlib-1.2.3-bin.zip libintl-0.14.4-bin.zip"
 
 CWD=$(pwd)
 function build_toolchain {
 # Make a clean TARGET location to stick everything
-DSTDIR=/target2
 if [ ! -d "$DSTDIR" ]; then
 	mkdir "$DSTDIR"
 fi
