@@ -13,7 +13,7 @@
 # NOTE: you'll also need to edit FreeEMS-toolchain.iss to suite your 
 # wine configuration and target paths, if you use "all" or "buildpkg"
 
-DSTDIR=/target2
+DSTDIR=/opt/crossroot2
 
 
 
