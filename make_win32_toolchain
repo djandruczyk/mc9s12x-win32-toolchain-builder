@@ -1,0 +1,218 @@
+#!/bin/bash
+# Making FreeEMS Crosstools for windows from linux:
+#
+# David J. Andruczyk, 2010
+#
+# This REQUIRES that you have dpkg-dev,texinfo mingw32, mingw32-binutils and 
+# mingw32-runtime installed and working. (preferrable from the vendor
+# repos and not from source as the paths will be different breaking '
+# the cross/uncross cripts)
+#
+
+#Additonal Pakages needed to be added..
+PKGS="coreutils-5.3.0-bin.zip coreutils-5.3.0-dep.zip make-3.81-bin.zip zlib-1.2.3-bin.zip libintl-0.14.4-bin.zip"
+
+CWD=$(pwd)
+function build_toolchain {
+# Make a clean TARGET location to stick everything
+DSTDIR=/target2
+if [ ! -d "$DSTDIR" ]; then
+	mkdir "$DSTDIR"
+fi
+echo "Target is ${DSTDIR}"	
+# Make sure we don't have cross vars set to begin with
+. $CWD/uncross
+# Setup crosscompile env vars:
+# First: build binutils for 9s12x
+# checkout seank's FreeScale-s12x-binutils
+if [ ! -d FreeScale-s12x-binutils ] ; then
+	git clone http://github.com/djandruczyk/FreeScale-s12x-binutils.git 
+fi
+pushd FreeScale-s12x-binutils 
+git pull
+if [ -d mc9s12x-build ] ; then
+	rm -rf mc9s12x-build
+fi
+mkdir mc9s12x-build 
+
+pushd mc9s12x-build 
+# GCC needs a direct linux->m68hc11 assembler for its canadian cross
+# intermediary compiler, so we need to build binutils twice, once for 
+# Linux->m68hc11, and once as a crossbuild win32->m68hc11
+# First linux->m68hc11
+../binutils-2.20/configure  --target=m68hc11 --enable-targets=m68hc11,m68hc12,mc9xgate --program-prefix=m68hc11- --disable-nls --prefix=${DSTDIR}/intermediary && \
+make 
+binutils_direct_hc11_res=$?
+sudo make install 
+make distclean
+# Now enable cross compile env vars and build the windows binaries
+. $CWD/cross
+../binutils-2.20/configure --build=i686-pc-linux-gnu --host=i586-mingw32msvc  --target=m68hc11 --enable-targets=m68hc11,m68hc12,mc9xgate --disable-nls --program-prefix=m68hc11- --prefix=${DSTDIR} && \
+make 
+binutils_cross_hc11_res=$?
+sudo make install 
+
+# Make Xgate version, no need to make intermediary for xgate as there is NOT
+# yet a GCC for xgate
+popd
+if [ -d mc9xgate-build ] ; then
+	rm -rf mc9xgate-build
+fi
+mkdir mc9xgate-build 
+pushd mc9xgate-build 
+. $CWD/cross
+../binutils-2.20/configure --build=i686-pc-linux-gnu --host=i586-mingw32msvc --target=mc9xgate --enable-targets=mc9xgate --program-prefix=mc9xgate- --disable-nls --prefix="$DSTDIR" && \
+make 
+binutils_cross_xgate_res=$?
+sudo make install 
+. $CWD/uncross
+popd
+popd
+# Now GCC
+# I used the sources from gcc-m68hc1x from ubuntu/debian
+if [ -d gcc-m68hc1x-3.3.6+3.1+dfsg ] ; then
+	rm -rf gcc-m68hc1x-3.3.6+3.1+dfsg
+fi
+apt-get source gcc-m68hc1x && \
+pushd gcc-m68hc1x-3.3.6+3.1+dfsg 
+tar xvfj gcc-3.3.6.tar.bz2 && \
+pushd gcc-3.3.6 
+cat ../gcc-3.3.6-m68hc1x-20060122.diffs |patch -p1 
+# GCC needs to be done twice.  Once as a native linux->m68hc11 compiler, and 
+# then as a cross compiled win32->m68hc11 compiler, which depends on the 
+# intermediary one being present, so build that one first
+./configure --target=m68hc11 --program-prefix=m68hc11- --disable-nls --disable-multilib --enable-languages=c  --prefix="$DSTDIR"/intermediary && \
+make 
+gcc_direct_res=$?
+sudo make install && \
+# Now enable cross env vars, add intermediaries into path and build the one
+# we really want.
+. $CWD/cross
+popd
+mv gcc-3.3.6 gcc-3.3.6-intermediary
+tar xvfj gcc-3.3.6.tar.bz2 && \
+pushd gcc-3.3.6 
+cat ../gcc-3.3.6-m68hc1x-20060122.diffs |patch -p1 
+OLDPATH=$PATH
+export PATH=$DSTDIR/intermediary:$PATH
+./configure --build=i686-pc-linux-gnu --host=i586-mingw32msvc --target=m68hc11 --program-prefix=m68hc11- --disable-nls --disable-multilib --enable-languages=c  --prefix="$DSTDIR" && \
+# FIX BUG in gcc 3.3.6 regarding canadian crosses
+pushd i686-pc-linux-gnu && \
+ln -sf ../include/ && \
+popd  && \
+make 
+gcc_cross_res=$?
+sudo make install
+. $CWD/uncross
+export PATH=$OLDPATH
+popd
+popd
+
+#Now newlib
+# I used the sources from newlib-m68hc1x from ubuntu/debian
+apt-get source newlib-m68hc1x && \
+#RESET ENV VARS back to normal, as newlib sets things up its own way
+. $CWD/uncross
+pushd newlib-1.18.0 && \
+ ./configure --build=i686-pc-linux-gnu --target=m68hc11 --disable-multilib --with-newlib --disable-shared --disable-threads --disable-nls --prefix="$DSTDIR" && \
+make 
+newlib_direct_res=$?
+sudo make install
+popd
+
+echo "
+	Compilation Results:
+	Direct Binutils Linux->hc11: $binutils_direct_hc11_res
+	Cross Binutils Win32->hc11:  $binutils_cross_hc11_res
+	Cross Binutils Win32->xgate: $binutils_cross_xgate_res
+	Direct GCC Linux->hc11:      $gcc_direct_res
+	Cross GCC Win32->hc11:       $gcc_cross_res
+	Direct Newlib Linux->hc11:   $newlib_direct_res
+
+		"
+
+if [ $binutils_direct_hc11_res -eq 0 ] && \
+	[ $binutils_cross_hc11_res -eq 0 ] && \
+	[ $binutils_cross_xgate_res -eq 0 ] && \
+	[ $gcc_direct_res -eq 0 ] && \
+	[ $gcc_cross_res -eq 0 ] && \
+	[ $newlib_direct_res -eq 0 ] ; then
+	echo "Everything compiled OK, installing prepackaged windows binaries"
+	pushd $DSTDIR
+	for pkg in $PKGS ; do
+		unzip $CWD/$pkg
+	done
+	rm -rf contrib manifest
+	popd
+fi
+}
+
+function cleanup {
+	echo "Cleaning out build directories"
+	if [ -d $CWD/FreeScale-s12x-binutils ] ; then
+		rm -rf $CWD/FreeScale-s12x-binutils
+	fi
+	if [ -d $CWD/newlib-1.18.0 ] ; then
+		rm -rf $CWD/newlib-1.18.0
+		rm -rf $CWD/newlib*
+	fi
+	if [ -d $CWD/gcc-m68hc1x-3.3.6+3.1+dfsg ] ; then
+		rm -rf $CWD/gcc-m68hc1x-3.3.6+3.1+dfsg
+		rm -rf $CWD/gcc*
+	fi
+	rm -f $CWD/*.zip
+	echo "All build dirs cleaned out"
+}
+
+function download_win32 {
+	wget -nv http://sourceforge.net/projects/gnuwin32/files/zlib/1.2.3/zlib-1.2.3-bin.zip/download -O  zlib-1.2.3-bin.zip
+	wget -nv http://sourceforge.net/projects/gnuwin32/files/coreutils/5.3.0/coreutils-5.3.0-bin.zip/download -O  coreutils-5.3.0-bin.zip
+	wget -nv http://sourceforge.net/projects/gnuwin32/files/coreutils/5.3.0/coreutils-5.3.0-dep.zip/download -O  coreutils-5.3.0-dep.zip
+	wget -nv http://sourceforge.net/projects/gnuwin32/files/libintl/0.14.4/libintl-0.14.4-bin.zip/download -O  libintl-0.14.4-bin.zip
+	wget -nv http://sourceforge.net/projects/gnuwin32/files/make/3.81/make-3.81-bin.zip/download -O  make-3.81-bin.zip
+}
+
+
+function build_win32_pkg {
+	ISS_FILE=dave/git/FreeEMS-compiler/FreeEMS-toolchain.iss
+	DRIVE=L
+
+	wine ~/.wine/drive_c/Program\ Files/Inno\ Setup\ 5/ISCC.exe "${DRIVE}":/"${ISS_FILE}"
+	mv $CWD/Output/setup.exe $CWD/Output/FreeEMS_ToolChain.exe
+}
+
+function done_all {
+	echo "
+
+				ALL DONE!!!
+Binary should be in the $CWD/Output Directory
+	
+"
+}
+
+if [ $# -ne 1 ] ; then
+	echo "Invalid args, need <all|download|buildpkg|clean>"
+	exit
+fi
+
+case "$1" in
+	all) 
+	download_win32
+	build_toolchain 
+	build_win32_pkg
+	done_all
+	;;
+	download)
+	download_win32
+	;;
+	buildpkg)
+	build_win32_pkg
+	;;
+	clean)
+	cleanup
+	;;
+	*)
+	echo "Invalid choice!"
+	exit -1
+	;;
+esac

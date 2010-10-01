@@ -1,0 +1,24 @@
+
+#
+# REALLY UGLY scripts to build a cross-compiler toolchain for the 
+# mc68hc11 series with xgate for FreeEMS.
+# 
+# This runs under linux (x86) and builds a Win32 toolchain including:
+#	binutils (both 68hc11 adn xgate cores)
+#	gcc 3.3.6 (68hc11 only)
+#	newlib
+#
+#
+# This reauires the following packages and maybe more
+# autoconf automake dpkg-source texinfo mingw32-runtime mingw32 
+# mingw32-binutils build-essential autoconf automake
+#
+# A minor edit is required to:
+# /usr/i586-mingw32msvc/include/stdint.h on line75 to make Gcc compile
+# REPLACE ->  typedef unsigned int uintptr_t;
+# WITH    ->  typedef int uintptr_t;
+#
+# the script make_win32_toolchain assumes a destination path of "/target2"
+# please modify it to taste...
+
+
