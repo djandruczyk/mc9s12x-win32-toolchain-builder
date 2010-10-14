@@ -18,7 +18,7 @@ DSTDIR=/opt/crossroot2
 
 
 #Additonal Pakages needed to be added..
-PKGS="coreutils-5.3.0-bin.zip coreutils-5.3.0-dep.zip make-3.81-bin.zip zlib-1.2.3-bin.zip libintl-0.14.4-bin.zip"
+PKGS="bc-1.06-2-bin.zip coreutils-5.3.0-bin.zip coreutils-5.3.0-dep.zip make-3.81-bin.zip zlib-1.2.3-bin.zip libintl-0.14.4-bin.zip"
 
 CWD=$(pwd)
 function build_toolchain {
@@ -167,6 +167,7 @@ function cleanup {
 }
 
 function download_win32 {
+	wget -nv http://sourceforge.net/projects/gnuwin32/files/bc/1.06-2/bc-1.06-2-bin.zip/download -O  bc-1.06-2-bin.zip
 	wget -nv http://sourceforge.net/projects/gnuwin32/files/zlib/1.2.3/zlib-1.2.3-bin.zip/download -O  zlib-1.2.3-bin.zip
 	wget -nv http://sourceforge.net/projects/gnuwin32/files/coreutils/5.3.0/coreutils-5.3.0-bin.zip/download -O  coreutils-5.3.0-bin.zip
 	wget -nv http://sourceforge.net/projects/gnuwin32/files/coreutils/5.3.0/coreutils-5.3.0-dep.zip/download -O  coreutils-5.3.0-dep.zip
