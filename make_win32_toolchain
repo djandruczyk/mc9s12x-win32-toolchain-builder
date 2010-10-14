@@ -16,7 +16,6 @@
 DSTDIR=/opt/crossroot2
 
 
-
 #Additonal Pakages needed to be added..
 PKGS="bc-1.06-2-bin.zip coreutils-5.3.0-bin.zip coreutils-5.3.0-dep.zip make-3.81-bin.zip zlib-1.2.3-bin.zip libintl-0.14.4-bin.zip"
 
@@ -31,12 +30,8 @@ echo "Target is ${DSTDIR}"
 . $CWD/uncross
 # Setup crosscompile env vars:
 # First: build binutils for 9s12x
-# checkout seank's FreeScale-s12x-binutils
-if [ ! -d FreeScale-s12x-binutils ] ; then
-	git clone http://github.com/seank/FreeScale-s12x-binutils.git 
-fi
 pushd FreeScale-s12x-binutils 
-git pull
+#git pull
 if [ -d mc9s12x-build ] ; then
 	rm -rf mc9s12x-build
 fi
@@ -75,16 +70,10 @@ sudo make install
 . $CWD/uncross
 popd
 popd
+
 # Now GCC
-# I used the sources from gcc-m68hc1x from ubuntu/debian
-if [ -d gcc-m68hc1x-3.3.6+3.1+dfsg ] ; then
-	rm -rf gcc-m68hc1x-3.3.6+3.1+dfsg
-fi
-apt-get source gcc-m68hc1x && \
 pushd gcc-m68hc1x-3.3.6+3.1+dfsg 
-tar xvfj gcc-3.3.6.tar.bz2 && \
 pushd gcc-3.3.6 
-cat ../gcc-3.3.6-m68hc1x-20060122.diffs |patch -p1 
 # GCC needs to be done twice.  Once as a native linux->m68hc11 compiler, and 
 # then as a cross compiled win32->m68hc11 compiler, which depends on the 
 # intermediary one being present, so build that one first
@@ -116,8 +105,6 @@ popd
 popd
 
 #Now newlib
-# I used the sources from newlib-m68hc1x from ubuntu/debian
-apt-get source newlib-m68hc1x && \
 #RESET ENV VARS back to normal, as newlib sets things up its own way
 . $CWD/uncross
 pushd newlib-1.18.0 && \
@@ -151,18 +138,10 @@ fi
 
 function cleanup {
 	echo "Cleaning out build directories"
-	if [ -d $CWD/FreeScale-s12x-binutils ] ; then
-		rm -rf $CWD/FreeScale-s12x-binutils
-	fi
-	if [ -d $CWD/newlib-1.18.0 ] ; then
-		rm -rf $CWD/newlib-1.18.0
-		rm -rf $CWD/newlib*
-	fi
-	if [ -d $CWD/gcc-m68hc1x-3.3.6+3.1+dfsg ] ; then
-		rm -rf $CWD/gcc-m68hc1x-3.3.6+3.1+dfsg
-		rm -rf $CWD/gcc*
-	fi
-	rm -f $CWD/*.zip
+	clean_binutils
+	clean_gcc
+	clean_newlib
+	clean_zips
 	echo "All build dirs cleaned out"
 }
 
@@ -175,6 +154,47 @@ function download_win32 {
 	wget -nv http://sourceforge.net/projects/gnuwin32/files/make/3.81/make-3.81-bin.zip/download -O  make-3.81-bin.zip
 }
 
+function clean_binutils {
+	if [ -d FreeScale-s12x-binutils ] ; then
+		rm -rf FreeScale-s12x-binutils
+	fi
+}
+
+function dl_binutils {
+	# checkout seank's FreeScale-s12x-binutils
+	if [ ! -d FreeScale-s12x-binutils ] ; then
+		git clone http://github.com/seank/FreeScale-s12x-binutils.git 
+	fi
+}
+
+function clean_gcc {
+	# I used the sources from gcc-m68hc1x from ubuntu/debian
+	rm -rf gcc-m68hc1*
+}
+
+function dl_gcc {
+	apt-get source gcc-m68hc1x && \
+	pushd gcc-m68hc1x-3.3.6+3.1+dfsg 
+	tar xvfj gcc-3.3.6.tar.bz2 && \
+	pushd gcc-3.3.6 
+	cat ../gcc-3.3.6-m68hc1x-20060122.diffs |patch -p1 
+	popd
+	popd
+}
+
+function clean_newlib {
+	# I used the sources from newlib-m68hc1x from ubuntu/debian
+	rm -rf newlib*
+}
+
+function dl_newlib {
+	# I used the sources from newlib-m68hc1x from ubuntu/debian
+	apt-get source newlib-m68hc1x 
+}
+
+function clean_zips {
+	rm -f $CWD/*.zip
+}
 
 function add_win32_pkgs {
 	pushd $DSTDIR
@@ -203,18 +223,28 @@ Binary should be in the $CWD/Output Directory
 }
 
 if [ $# -ne 1 ] ; then
-	echo "Invalid args, need <all|download|buildpkg|clean>"
+	echo "Invalid args, need <all|get_binutils|get_pre_reqs|buildpkg|clean>"
 	exit
 fi
 
 case "$1" in
 	all) 
 	download_win32
+	dl_binutils
+	dl_gcc
+	dl_newlib
 	build_toolchain 
 	build_win32_pkg
 	done_all
 	;;
-	download)
+	get_pre_reqs)
+	echo "Cloning binutils"
+	dl_binutils
+	echo "DL'ing GCC"
+	dl_gcc
+	echo "DL'ing Newlib"
+	dl_newlib
+	echo "DL'ing Win32 binaries for Pkg"
 	download_win32
 	;;
 	buildpkg)

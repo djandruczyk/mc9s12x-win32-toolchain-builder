@@ -20,7 +20,7 @@ LicenseFile=.\LICENSE
 ;InfoBeforeFile=.\WIN_NOTES.txt
 
 [Tasks]
-Name: modifypath; Description: Add application directory to your environmental path, which is required to easily call GCC without needing absolute paths; Flags: unchecked
+Name: modifypath; Description: Add application directory to your environmental path, which is required to easily call GCC without needing absolute paths;  Flags:
 
 [Files]
 Source: "z:\opt\crossroot2\*.*"; DestDir: "{app}"; Excludes: "*intermediary*"; Flags: recursesubdirs createallsubdirs ignoreversion
