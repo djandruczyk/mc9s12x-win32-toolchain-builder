@@ -1,1 +1,8 @@
 Output
+*.zip
+FreeScale*
+gcc*
+newlib*
+BSTAMP
+*-build
+toolchain
