@@ -144,54 +144,48 @@ function build_toolchain {
 if [ ! -d "$DSTDIR" ]; then
 	mkdir "$DSTDIR"
 else
-	echo "$DSTDIR ALREADY EXISTS, thismay not be what you want!!!"
-	sleep 2
+	echo "$DSTDIR ALREADY EXISTS, this may not be what you want!!!"
+	sleep 5
 fi
 echo "Target is ${DSTDIR}"	
 build_s12x_binutils_direct
 res=$?
 binutils_direct_hcs12x_res=$res
 if [ $res -ne 0 ] ; then
-	printf "\b\nFailure directly compiling hcs12x binutils, result code %i\n" $res
-	exit -1
+	warn_user $(printf "\b\nFailure directly compiling hcs12x binutils, result code %i\n" $res)
 fi
 build_s12x_binutils_cross
 res=$?
 binutils_cross_hcs12x_res=$res
 if [ $res -ne 0 ] ; then
-	printf "\b\nFailure cross compiling hcs12x binutils, result code %i\n" $res
-	exit -1
+	warn_user $(printf "\b\nFailure cross compiling hcs12x binutils, result code %i\n" $res)
 fi
 build_mc9xgate_binutils_cross
 res=$?
 binutils_cross_mc9xgate_res=$res
 if [ $res -ne 0 ] ; then
-	printf "\b\nFailure cross compiling mc9xgate binutils, result code %i\n" $res
-	exit -1
+	warn_user $(printf "\b\nFailure cross compiling mc9xgate binutils, result code %i\n" $res)
 fi
 
 build_intermediary_gcc
 res=$?
 gcc_direct_res=$?
 if [ $res -ne 0 ] ; then
-	printf "\b\nFailure direct compiling intermediary GCC for canadian cross, result code %i\n" $res
-	exit -1
+	warn_user $(printf "\b\nFailure direct compiling intermediary GCC for canadian cross, result code %i\n" $res)
 fi
 
 build_cross_gcc
 res=$?
 gcc_cross_res=$?
 if [ $res -ne 0 ] ; then
-	printf "\b\nFailure cross compiling GCC, result code %i\n" $res
-	exit -1
+	warn_user $(printf "\b\nFailure cross compiling GCC, result code %i\n" $res)
 fi
 
 build_direct_newlib
 res=$?
 newlib_direct_res=$?
 if [ $res -ne 0 ] ; then
-	printf "\b\nFailure direct compiling newlib, result code %i\n" $res
-	exit -1
+	warn_user $(printf "\b\nFailure direct compiling newlib, result code %i\n" $res)
 fi
 
 echo "
@@ -221,8 +215,22 @@ function cleanup {
 	clean_binutils
 	clean_gcc
 	clean_newlib
-	#clean_zips
 	echo "All build dirs cleaned out"
+}
+
+function full_cleanup {
+	echo "Cleaning out sources and build directories"
+	clean_binutils
+	clean_gcc
+	clean_newlib
+	clean_zips
+	clean_gcc_sources
+	clean_newlib_sources
+	clean_binutils_sources
+	clean_dest
+	rm -f $CWD/FreeEMS-toolchain.iss
+	rm -f $CWD/BSTAMP
+	echo "All source and build dirs cleaned out"
 }
 
 function download_win32 {
@@ -245,12 +253,19 @@ function clean_binutils {
 	fi
 }
 
+function clean_binutils_sources {
+	rm -rf ${CWD}/FreeScale*
+}
+
 function dl_binutils {
 	# checkout seank's FreeScale-s12x-binutils
 	echo "Cloning binutils git tree locally"
 	if [ ! -d FreeScale-s12x-binutils ] ; then
 		git clone http://github.com/seank/FreeScale-s12x-binutils.git 
 	fi
+	pushd FreeScale-s12x-binutils
+	git log --date=short |grep Date |head -n1 |awk '{print $2}' > "$CWD/BSTAMP"
+	popd
 }
 
 function clean_gcc {
@@ -261,6 +276,10 @@ function clean_gcc {
 	if [ -d gcc-cross-build ] ; then
 		rm -rf gcc-cross-build
 	fi
+}
+
+function clean_gcc_sources {
+	rm -rf ${CWD}/gcc*
 }
 
 function dl_gcc {
@@ -284,6 +303,14 @@ function clean_newlib {
 	if [ -d newlib-build ] ; then
 		rm -rf newlib-build
 	fi
+}
+
+function clean_newlib_sources {
+	rm -rf ${CWD}/newlib*
+}
+
+function clean_dest {
+	rm -rf ${DSTDIR}
 }
 
 function dl_newlib {
@@ -310,27 +337,33 @@ function build_win32_pkg {
 		rm -f FreeEMS-toolchain.iss
 	fi
 	DEST=$(echo $DSTDIR |sed -e 's/\//\\\\/g')
-echo "DESTDIR is \"$DEST\""
-	sed -e s,_DSTDIR_,$DEST,g < FreeEMS-toolchain.iss.in > FreeEMS-toolchain.iss
+	BSTAMP=$(cat $CWD/BSTAMP)
+	sed -e s,_DSTDIR_,$DEST,g  -e s,_BSTAMP_,$BSTAMP,g < FreeEMS-toolchain.iss.in > FreeEMS-toolchain.iss
 	ISS_FILE=dave/git/FreeEMS-win32-toolchain-builder/FreeEMS-toolchain.iss
 	DRIVE=L
 
 	wine ~/.wine/drive_c/Program\ Files/Inno\ Setup\ 5/ISCC.exe "${DRIVE}":/"${ISS_FILE}"
-	mv $CWD/Output/setup.exe $CWD/Output/FreeEMS_ToolChain.exe
+	mv $CWD/Output/setup.exe $CWD/Output/FreeEMS_ToolChain-$BSTAMP.exe
 }
 
+function warn_user {
+	echo ""
+	echo $*
+	echo ""
+	exit -1
+
+}
 function done_all {
 	echo "
 
 				ALL DONE!!!
-Binary should be in the $CWD/Output Directory
+FreeEMS_ToolChain-$(cat $CWD/BSTAMP).exe should be in the $CWD/Output Directory
 	
 "
 }
 
 if [ $# -ne 1 ] ; then
-	echo "Invalid args, need <all|get_binutils|get_pre_reqs|buildpkg|clean>"
-	exit
+	warn_user "Invalid args, need <all|get_pre_reqs|buildpkg|clean|realclean>"
 fi
 
 case "$1" in
@@ -338,8 +371,9 @@ case "$1" in
 	dl_binutils
 	dl_gcc
 	dl_newlib
-	build_toolchain 
 	download_win32
+	build_toolchain 
+	add_win32_pkgs
 	build_win32_pkg
 	done_all
 	;;
@@ -349,18 +383,27 @@ case "$1" in
 	dl_newlib
 	download_win32
 	;;
+	get_binutils)
+	dl_binutils
+	;;
 	get_gcc)
 	dl_gcc
 	;;
+	get_newlib)
+	dl_newlib
+	;;
 	buildpkg)
+	download_win32
 	add_win32_pkgs
 	build_win32_pkg
 	;;
 	clean)
 	cleanup
 	;;
+	realclean)
+	full_cleanup
+	;;
 	*)
-	echo "Invalid choice!"
-	exit -1
+	warn_user "Invalid args, need <all|get_pre_reqs|buildpkg|clean|realclean>"
 	;;
 esac
