@@ -28,42 +28,64 @@ function build_s12x_binutils_direct {
 # Setup crosscompile env vars:
 # First: build binutils for 9s12x
 #pushd ${CWD}/FreeScale-s12x-binutils 
-if [ -d mc9s12x-build ] ; then
-	rm -rf mc9s12x-build
+if [ -f mc9s12x-direct-build/GOOD ] ; then
+	return 0
 fi
-mkdir mc9s12x-build 
-pushd mc9s12x-build 
+if [ -d mc9s12x-direct-build ] ; then
+	rm -rf mc9s12x-direct-build
+fi
+mkdir mc9s12x-direct-build 
+pushd mc9s12x-direct-build 
 # GCC needs a direct linux->m68hc11 assembler for its canadian cross
 # intermediary compiler, so we need to build binutils twice, once for 
 # Linux->m68hc11, and once as a crossbuild win32->m68hc11
 # First linux->m68hc11
-${CWD}/FreeScale-s12x-binutils/binutils-2.20/configure  --target=m68hc11 --enable-targets=m68hc11,m68hc12,mc9xgate --program-prefix=m68hc11- --disable-nls --prefix=${DSTDIR}/intermediary && \
+${CWD}/FreeScale-s12x-binutils/binutils-2.20/configure --target=m68hc11 --enable-targets=m68hc11,m68hc12,mc9xgate --program-prefix=m68hc11- --disable-nls --prefix=${DSTDIR}/intermediary && \
 make && \
 make install && \
 popd
-return $?
+if [ $? -eq 0 ]; then
+	touch mc9s12x-direct-build/GOOD
+	return 0
+else
+	return $?
+fi
 }
 
 function build_s12x_binutils_cross {
 # Now enable cross compile env vars and build the windows binaries
-pushd mc9s12x-build 
-make distclean
+if [ -f mc9s12x-cross-build/GOOD ] ; then
+	return 0
+fi
+if [ -d mc9s12x-cross-build ] ; then
+	rm -rf mc9s12x-cross-build
+fi
+mkdir mc9s12x-cross-build 
+pushd mc9s12x-cross-build 
 . ${CWD}/cross
 ${CWD}/FreeScale-s12x-binutils/binutils-2.20/configure --build=i686-pc-linux-gnu --host=i586-mingw32msvc  --target=m68hc11 --enable-targets=m68hc11,m68hc12,mc9xgate --disable-nls --program-prefix=m68hc11- --prefix=${DSTDIR} && \
 make  && \
 make install && \
 popd
-return $?
+if [ $? -eq 0 ]; then
+	touch mc9s12x-cross-build/GOOD
+	return 0
+else
+	return $?
+fi
 }
 
 function build_mc9xgate_binutils_cross {
 # Make Xgate version, no need to make intermediary for xgate as there is NOT
 # yet a GCC for xgate
-if [ -d mc9xgate-build ] ; then
-	rm -rf mc9xgate-build
+if [ -f mc9xgate-cross-build/GOOD ] ; then
+	return 0
 fi
-mkdir mc9xgate-build 
-pushd mc9xgate-build 
+if [ -d mc9xgate-cross-build ] ; then
+	rm -rf mc9xgate-cross-build
+fi
+mkdir mc9xgate-cross-build 
+pushd mc9xgate-cross-build 
 . ${CWD/cross
 }
 ${CWD}/FreeScale-s12x-binutils/binutils-2.20/configure --build=i686-pc-linux-gnu --host=i586-mingw32msvc --target=mc9xgate --enable-targets=mc9xgate --program-prefix=mc9xgate- --disable-nls --prefix="$DSTDIR" && \
@@ -71,10 +93,18 @@ make && \
 make install && \
 popd && \
 . ${CWD}/uncross
-return $?
+if [ $? -eq 0 ]; then
+	touch mc9xgate-cross-build/GOOD
+	return 0
+else
+	return $?
+fi
 }
 
 function build_intermediary_gcc {
+if [ -f gcc-intermediary-build/GOOD ] ; then
+	return 0
+fi
 if [ -d gcc-intermediary-build ] ; then
 	rm -rf gcc-intermediary-build
 fi
@@ -90,12 +120,20 @@ make &&
 make install && \
 export PATH=$OLDPATH && \
 popd
-return $?
+if [ $? -eq 0 ]; then
+	touch gcc-intermediary-build/GOOD
+	return 0
+else
+	return $?
+fi
 }
 
 
 function build_cross_gcc {
 . $CWD/cross
+if [ -f gcc-cross-build/GOOD ] ; then
+	return 0
+fi
 if [ -d gcc-cross-build ] ; then
 	rm -rf gcc-cross-build
 fi
@@ -116,13 +154,21 @@ make install && \
 . $CWD/uncross && \
 export PATH=$OLDPATH && \
 popd
-return $?
+if [ $? -eq 0 ]; then
+	touch gcc-cross-build/GOOD
+	return 0
+else
+	return $?
+fi
 }
 
 function build_direct_newlib {
 #Now newlib
 #RESET ENV VARS back to normal, as newlib sets things up its own way
 . $CWD/uncross
+if [ -f newlib-build/GOOD ] ; then
+	return 0
+fi
 if [ -d newlib-build ] ; then
 	rm -rf newlib-build
 fi
@@ -135,7 +181,12 @@ make  && \
 make install && \
 export PATH=$OLDPATH && \
 popd
-return $?
+if [ $? -eq 0 ]; then
+	touch newlib-build/GOOD
+	return 0
+else
+	return $?
+fi
 }
 
 
@@ -245,11 +296,14 @@ function download_win32 {
 }
 
 function clean_binutils {
-	if [ -d mc9s12x-build ] ; then
-		rm -rf mc9s12x-build
+	if [ -d mc9s12x-direct-build ] ; then
+		rm -rf mc9s12x-direct-build
 	fi
-	if [ -d mc9xgate-build ] ; then
-		rm -rf mc9xgate-build
+	if [ -d mc9s12x-cross-build ] ; then
+		rm -rf mc9s12x-cross-build
+	fi
+	if [ -d mc9xgate-cross-build ] ; then
+		rm -rf mc9xgate-cross-build
 	fi
 }
 
