@@ -6,3 +6,5 @@ newlib*
 BSTAMP
 *-build
 toolchain
+FreeEMS-toolchain.iss
+logfile.txt
