@@ -166,18 +166,17 @@ function build_direct_newlib {
 #Now newlib
 #RESET ENV VARS back to normal, as newlib sets things up its own way
 . $CWD/uncross
-if [ -f newlib-1.18.0/GOOD ] ; then
+if [ -f newlib-build/GOOD ] ; then
 	return 0
 fi
-if [ -d newlib-1.18.0 ] ; then
-	clean_newlib
-	dl_newlib
+if [ -d newlib-build ] ; then
+	rm -rf newlib-build
 fi
 OLDPATH=$PATH
 export PATH=$DSTDIR/bin:$DSTDIR/intermediary/bin:$PATH
-pushd newlib-1.18.0 && \
-#${CWD}/newlib-1.18.0/configure --build=i686-pc-linux-gnu --target=m68hc11 --disable-multilib --with-newlib --disable-shared --disable-threads --disable-nls --prefix="$DSTDIR" && \
-./configure --build=i686-pc-linux-gnu --target=m68hc11 --with-newlib --disable-shared --disable-threads --disable-nls --prefix="$DSTDIR" && \
+mkdir newlib-build
+pushd newlib-build && \
+${CWD}/newlib-1.18.0/configure --build=i686-pc-linux-gnu --target=m68hc11 --disable-multilib --with-newlib --disable-shared --disable-threads --disable-nls --prefix="$DSTDIR" && \
 make  && \
 make install && \
 export PATH=$OLDPATH && \
