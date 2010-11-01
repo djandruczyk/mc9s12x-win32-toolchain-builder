@@ -176,7 +176,7 @@ OLDPATH=$PATH
 export PATH=$DSTDIR/bin:$DSTDIR/intermediary/bin:$PATH
 mkdir newlib-build
 pushd newlib-build && \
-${CWD}/newlib-1.18.0/configure --build=i686-pc-linux-gnu --target=m68hc11 --disable-multilib --with-newlib --disable-shared --disable-threads --disable-nls --prefix="$DSTDIR" && \
+${CWD}/newlib-1.18.0/configure --build=i686-pc-linux-gnu --target=m68hc11 --disable-multilib --disable-shared --disable-threads --disable-nls --prefix="$DSTDIR" && \
 make  && \
 make install && \
 export PATH=$OLDPATH && \
