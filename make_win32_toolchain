@@ -252,8 +252,8 @@ echo "
 
 		"
 
-if [ $binutils_direct_hcs11x_res -eq 0 ] && \
-	[ $binutils_cross_hcs11x_res -eq 0 ] && \
+if [ $binutils_direct_hcs12x_res -eq 0 ] && \
+	[ $binutils_cross_hcs12x_res -eq 0 ] && \
 	[ $binutils_cross_xgate_res -eq 0 ] && \
 	[ $gcc_direct_res -eq 0 ] && \
 	[ $gcc_cross_res -eq 0 ] && \
