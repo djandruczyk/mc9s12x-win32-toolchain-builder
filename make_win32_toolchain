@@ -28,24 +28,24 @@ function build_s12x_binutils_direct {
 # Setup crosscompile env vars:
 # First: build binutils for 9s12x
 #pushd ${CWD}/FreeScale-s12x-binutils 
-if [ -f mc9s12x-direct-build/GOOD ] ; then
+if [ -f m68hcs12x-direct-build/GOOD ] ; then
 	return 0
 fi
-if [ -d mc9s12x-direct-build ] ; then
-	rm -rf mc9s12x-direct-build
+if [ -d m68hcs12x-direct-build ] ; then
+	rm -rf m68hcs12x-direct-build
 fi
-mkdir mc9s12x-direct-build 
-pushd mc9s12x-direct-build 
+mkdir m68hcs12x-direct-build 
+pushd m68hcs12x-direct-build 
 # GCC needs a direct linux->m68hc11 assembler for its canadian cross
 # intermediary compiler, so we need to build binutils twice, once for 
 # Linux->m68hc11, and once as a crossbuild win32->m68hc11
 # First linux->m68hc11
-${CWD}/FreeScale-s12x-binutils/binutils-2.20/configure --target=m68hc11 --enable-targets=m68hc11,m68hc12,mc9xgate --program-prefix=m68hc11- --disable-nls --prefix=${DSTDIR}/intermediary && \
-make && \
+${CWD}/FreeScale-s12x-binutils/binutils-2.22.0/configure --target=m68hc11 --enable-targets=m68hc11,m68hc12,xgate --program-prefix=m68hc11- --disable-werror --disable-nls --prefix=${DSTDIR}/intermediary && \
+make -j3 && \
 make install && \
 popd
 if [ $? -eq 0 ]; then
-	touch mc9s12x-direct-build/GOOD
+	touch m68hcs12x-direct-build/GOOD
 	return 0
 else
 	return $?
@@ -54,47 +54,48 @@ fi
 
 function build_s12x_binutils_cross {
 # Now enable cross compile env vars and build the windows binaries
-if [ -f mc9s12x-cross-build/GOOD ] ; then
+if [ -f m68hcs12x-cross-build/GOOD ] ; then
 	return 0
 fi
-if [ -d mc9s12x-cross-build ] ; then
-	rm -rf mc9s12x-cross-build
+if [ -d m68hcs12x-cross-build ] ; then
+	rm -rf m68hcs12x-cross-build
 fi
-mkdir mc9s12x-cross-build 
-pushd mc9s12x-cross-build 
+mkdir m68hcs12x-cross-build 
+pushd m68hcs12x-cross-build 
 . ${CWD}/cross
-${CWD}/FreeScale-s12x-binutils/binutils-2.20/configure --build=i686-pc-linux-gnu --host=i586-mingw32msvc  --target=m68hc11 --enable-targets=m68hc11,m68hc12,mc9xgate --disable-nls --program-prefix=m68hc11- --prefix=${DSTDIR} && \
-make  && \
+${CWD}/FreeScale-s12x-binutils/binutils-2.22.0/configure --build=i686-pc-linux-gnu --host=i586-mingw32msvc  --target=m68hc11 --enable-targets=m68hc11,m68hc12,xgate --disable-nls --disable-werror --program-prefix=m68hc11- --prefix=${DSTDIR} && \
+make -j3 && \
 make install && \
-popd
+popd && \
+. ${CWD}/uncross
 if [ $? -eq 0 ]; then
-	touch mc9s12x-cross-build/GOOD
+	touch m68hcs12x-cross-build/GOOD
 	return 0
 else
 	return $?
 fi
 }
 
-function build_mc9xgate_binutils_cross {
+function build_xgate_binutils_cross {
 # Make Xgate version, no need to make intermediary for xgate as there is NOT
 # yet a GCC for xgate
-if [ -f mc9xgate-cross-build/GOOD ] ; then
+if [ -f xgate-cross-build/GOOD ] ; then
 	return 0
 fi
-if [ -d mc9xgate-cross-build ] ; then
-	rm -rf mc9xgate-cross-build
+if [ -d xgate-cross-build ] ; then
+	rm -rf xgate-cross-build
 fi
-mkdir mc9xgate-cross-build 
-pushd mc9xgate-cross-build 
+mkdir xgate-cross-build 
+pushd xgate-cross-build 
 . ${CWD/cross
 }
-${CWD}/FreeScale-s12x-binutils/binutils-2.20/configure --build=i686-pc-linux-gnu --host=i586-mingw32msvc --target=mc9xgate --enable-targets=mc9xgate --program-prefix=mc9xgate- --disable-nls --prefix="$DSTDIR" && \
-make && \
+${CWD}/FreeScale-s12x-binutils/binutils-2.22.0/configure --build=i686-pc-linux-gnu --host=i586-mingw32msvc --target=xgate --enable-targets=xgate --program-prefix=xgate- --disable-werror --disable-nls --prefix="$DSTDIR" && \
+make -j3 && \
 make install && \
 popd && \
 . ${CWD}/uncross
 if [ $? -eq 0 ]; then
-	touch mc9xgate-cross-build/GOOD
+	touch xgate-cross-build/GOOD
 	return 0
 else
 	return $?
@@ -116,7 +117,7 @@ export PATH=$DSTDIR/intermediary/bin:$PATH
 # then as a cross compiled win32->m68hc11 compiler, which depends on the 
 # intermediary one being present, so build that one first
 ${CWD}/gcc-m68hc1x-3.3.6+3.1+dfsg/gcc-3.3.6/configure --target=m68hc11 --program-prefix=m68hc11- --disable-nls --with-gnu-as --with-gnu-ld --disable-checking --without-headers --enable-languages=c --prefix="$DSTDIR"/intermediary && \
-make &&
+make -j3 &&
 make install && \
 export PATH=$OLDPATH && \
 popd
@@ -149,11 +150,11 @@ ${CWD}/gcc-m68hc1x-3.3.6+3.1+dfsg/gcc-3.3.6/configure --build=i686-pc-linux-gnu 
 pushd i686-pc-linux-gnu && \
 ln -sf ${CWD}/gcc-m68hc1x-3.3.6+3.1+dfsg/gcc-3.3.6/include/ && \
 popd  && \
-make && \
+make -j3 && \
 make install && \
-. $CWD/uncross && \
 export PATH=$OLDPATH && \
-popd
+popd && \
+. $CWD/uncross 
 if [ $? -eq 0 ]; then
 	touch gcc-cross-build/GOOD
 	return 0
@@ -173,11 +174,12 @@ if [ -d newlib-build ] ; then
 	rm -rf newlib-build
 fi
 OLDPATH=$PATH
-export PATH=$DSTDIR/bin:$DSTDIR/intermediary/bin:$PATH
+export PATH=$DSTDIR/intermediary/bin:$PATH
+echo "Path is $PATH"
 mkdir newlib-build
 pushd newlib-build && \
 ${CWD}/newlib-1.18.0/configure --build=i686-pc-linux-gnu --target=m68hc11 --disable-multilib --disable-shared --disable-threads --disable-nls --prefix="$DSTDIR" && \
-make  && \
+make -j3 && \
 make install && \
 export PATH=$OLDPATH && \
 popd
@@ -211,11 +213,11 @@ binutils_cross_hcs12x_res=$res
 if [ $res -ne 0 ] ; then
 	warn_user $(printf "\b\nFailure cross compiling hcs12x binutils, result code %i\n" $res)
 fi
-build_mc9xgate_binutils_cross
+build_xgate_binutils_cross
 res=$?
-binutils_cross_mc9xgate_res=$res
+binutils_cross_xgate_res=$res
 if [ $res -ne 0 ] ; then
-	warn_user $(printf "\b\nFailure cross compiling mc9xgate binutils, result code %i\n" $res)
+	warn_user $(printf "\b\nFailure cross compiling xgate binutils, result code %i\n" $res)
 fi
 
 build_intermediary_gcc
@@ -243,7 +245,7 @@ echo "
 	Compilation Results:
 	Direct Binutils Linux->hc11: $binutils_direct_hcs12x_res
 	Cross Binutils Win32->hc11:  $binutils_cross_hcs12x_res
-	Cross Binutils Win32->xgate: $binutils_cross_mc9xgate_res
+	Cross Binutils Win32->xgate: $binutils_cross_xgate_res
 	Direct GCC Linux->hc11:      $gcc_direct_res
 	Cross GCC Win32->hc11:       $gcc_cross_res
 	Direct Newlib Linux->hc11:   $newlib_direct_res
@@ -252,7 +254,7 @@ echo "
 
 if [ $binutils_direct_hcs11x_res -eq 0 ] && \
 	[ $binutils_cross_hcs11x_res -eq 0 ] && \
-	[ $binutils_cross_mc9xgate_res -eq 0 ] && \
+	[ $binutils_cross_xgate_res -eq 0 ] && \
 	[ $gcc_direct_res -eq 0 ] && \
 	[ $gcc_cross_res -eq 0 ] && \
 	[ $newlib_direct_res -eq 0 ] ; then
@@ -266,6 +268,7 @@ function cleanup {
 	clean_binutils
 	clean_gcc
 	clean_newlib
+#clean_dest
 	echo "All build dirs cleaned out"
 }
 
@@ -297,14 +300,14 @@ function download_win32 {
 }
 
 function clean_binutils {
-	if [ -d mc9s12x-direct-build ] ; then
-		rm -rf mc9s12x-direct-build
+	if [ -d m68hcs12x-direct-build ] ; then
+		rm -rf m68hcs12x-direct-build
 	fi
-	if [ -d mc9s12x-cross-build ] ; then
-		rm -rf mc9s12x-cross-build
+	if [ -d m68hcs12x-cross-build ] ; then
+		rm -rf m68hcs12x-cross-build
 	fi
-	if [ -d mc9xgate-cross-build ] ; then
-		rm -rf mc9xgate-cross-build
+	if [ -d xgate-cross-build ] ; then
+		rm -rf xgate-cross-build
 	fi
 }
 
@@ -316,7 +319,7 @@ function dl_binutils {
 	# checkout seank's FreeScale-s12x-binutils
 	echo "Cloning binutils git tree locally"
 	if [ ! -d FreeScale-s12x-binutils ] ; then
-		git clone http://github.com/seank/FreeScale-s12x-binutils.git 
+		git clone http://github.com/dandruczyk/FreeScale-s12x-binutils.git 
 	fi
 	pushd FreeScale-s12x-binutils
 	git log --date=short |grep Date |head -n1 |awk '{print $2}' > "$CWD/BSTAMP"
@@ -355,8 +358,8 @@ function dl_gcc {
 
 function clean_newlib {
 	# I used the sources from newlib-m68hc1x from ubuntu/debian
-	if [ -d newlib-1.18.0 ] ; then
-		rm -rf newlib-1.18.0
+	if [ -d newlib-build ] ; then
+		rm -rf newlib-build
 	fi
 }
 
@@ -393,12 +396,13 @@ function build_win32_pkg {
 	fi
 	DEST=$(echo $DSTDIR |sed -e 's/\//\\\\/g')
 	BSTAMP=$(cat $CWD/BSTAMP)
-	sed -e s,_DSTDIR_,$DEST,g  -e s,_BSTAMP_,$BSTAMP,g < FreeEMS-toolchain.iss.in > FreeEMS-toolchain.iss
+	MICRO=$(cat $CWD/MICRO)
+	sed -e s,_DSTDIR_,$DEST,g  -e s,_BSTAMP_,$BSTAMP,g -e s,_MICRO_,$MICRO,g < FreeEMS-toolchain.iss.in > FreeEMS-toolchain.iss
 	ISS_FILE=dave/git/FreeEMS-win32-toolchain-builder/FreeEMS-toolchain.iss
 	DRIVE=L
 
 	wine ~/.wine/drive_c/Program\ Files/Inno\ Setup\ 5/ISCC.exe "${DRIVE}":/"${ISS_FILE}"
-	mv $CWD/Output/setup.exe $CWD/Output/FreeEMS_ToolChain-$BSTAMP.exe
+	mv $CWD/Output/setup.exe $CWD/Output/FreeEMS_ToolChain-${BSTAMP}.${MICRO}.exe
 }
 
 function warn_user {
@@ -412,7 +416,7 @@ function done_all {
 	echo "
 
 				ALL DONE!!!
-FreeEMS_ToolChain-$(cat $CWD/BSTAMP).exe should be in the $CWD/Output Directory
+FreeEMS_ToolChain-$(cat $CWD/BSTAMP).$(cat $CWD/MICRO}).exe should be in the $CWD/Output Directory
 	
 "
 }
@@ -431,6 +435,9 @@ case "$1" in
 	add_win32_pkgs
 	build_win32_pkg
 	done_all
+	;;
+	compile)
+	build_toolchain
 	;;
 	get_pre_reqs)
 	dl_binutils
