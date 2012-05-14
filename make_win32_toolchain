@@ -28,14 +28,14 @@ function build_s12x_binutils_direct {
 # Setup crosscompile env vars:
 # First: build binutils for 9s12x
 #pushd ${CWD}/FreeScale-s12x-binutils 
-if [ -f m68hcs12x-direct-build/GOOD ] ; then
+if [ -f mc9s12x-direct-build/GOOD ] ; then
 	return 0
 fi
-if [ -d m68hcs12x-direct-build ] ; then
-	rm -rf m68hcs12x-direct-build
+if [ -d mc9s12x-direct-build ] ; then
+	rm -rf mc9s12x-direct-build
 fi
-mkdir m68hcs12x-direct-build 
-pushd m68hcs12x-direct-build 
+mkdir mc9s12x-direct-build 
+pushd mc9s12x-direct-build 
 # GCC needs a direct linux->m68hc11 assembler for its canadian cross
 # intermediary compiler, so we need to build binutils twice, once for 
 # Linux->m68hc11, and once as a crossbuild win32->m68hc11
@@ -45,7 +45,7 @@ make -j3 && \
 make install && \
 popd
 if [ $? -eq 0 ]; then
-	touch m68hcs12x-direct-build/GOOD
+	touch mc9s12x-direct-build/GOOD
 	return 0
 else
 	return $?
@@ -54,14 +54,14 @@ fi
 
 function build_s12x_binutils_cross {
 # Now enable cross compile env vars and build the windows binaries
-if [ -f m68hcs12x-cross-build/GOOD ] ; then
+if [ -f mc9s12x-cross-build/GOOD ] ; then
 	return 0
 fi
-if [ -d m68hcs12x-cross-build ] ; then
-	rm -rf m68hcs12x-cross-build
+if [ -d mc9s12x-cross-build ] ; then
+	rm -rf mc9s12x-cross-build
 fi
-mkdir m68hcs12x-cross-build 
-pushd m68hcs12x-cross-build 
+mkdir mc9s12x-cross-build 
+pushd mc9s12x-cross-build 
 . ${CWD}/cross
 ${CWD}/FreeScale-s12x-binutils/binutils-2.22.0/configure --build=i686-pc-linux-gnu --host=i586-mingw32msvc  --target=m68hc11 --enable-targets=m68hc11,m68hc12,xgate --disable-nls --disable-werror --program-prefix=m68hc11- --prefix=${DSTDIR} && \
 make -j3 && \
@@ -69,7 +69,7 @@ make install && \
 popd && \
 . ${CWD}/uncross
 if [ $? -eq 0 ]; then
-	touch m68hcs12x-cross-build/GOOD
+	touch mc9s12x-cross-build/GOOD
 	return 0
 else
 	return $?
@@ -300,11 +300,11 @@ function download_win32 {
 }
 
 function clean_binutils {
-	if [ -d m68hcs12x-direct-build ] ; then
-		rm -rf m68hcs12x-direct-build
+	if [ -d mc9s12x-direct-build ] ; then
+		rm -rf mc9s12x-direct-build
 	fi
-	if [ -d m68hcs12x-cross-build ] ; then
-		rm -rf m68hcs12x-cross-build
+	if [ -d mc9s12x-cross-build ] ; then
+		rm -rf mc9s12x-cross-build
 	fi
 	if [ -d xgate-cross-build ] ; then
 		rm -rf xgate-cross-build
