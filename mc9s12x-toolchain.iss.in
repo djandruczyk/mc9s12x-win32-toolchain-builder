@@ -1,6 +1,6 @@
 [Setup]
-AppName=FreeEMS GNU Development Toolchain
-AppVerName=FreeEMS Toolchain _BSTAMP_._MICRO_
+AppName=mc9s12x GNU Development Toolchain
+AppVerName=mc9s12x Toolchain _BSTAMP_._MICRO_
 DefaultDirName={sd}\usr
 CreateUninstallRegKey=1
 UsePreviousAppDir=1
