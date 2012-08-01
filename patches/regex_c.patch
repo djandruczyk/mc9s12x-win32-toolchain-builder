@@ -1,0 +1,19 @@
+diff --git a/src/libiberty/regex.c b/src/libiberty/regex.c
+index e3439b2..bbb5fbc 100644
+--- a/src/libiberty/regex.c
++++ b/src/libiberty/regex.c
+@@ -8173,11 +8173,13 @@ weak_alias (__regexec, regexec)
+    from either regcomp or regexec.   We don't use PREG here.  */
+ 
+ size_t
+-regerror (errcode, preg, errbuf, errbuf_size)
++regerror (int errcode, const regex_t *preg, char *errbuf, size_t errbuf_size)
++       /*
+     int errcode;
+     const regex_t *preg;
+     char *errbuf;
+     size_t errbuf_size;
++       */
+ {
+   const char *msg;
+   size_t msg_size;

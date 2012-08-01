@@ -139,7 +139,7 @@ export PATH=$DSTDIR/intermediary/bin:$PATH
 # GCC needs to be done twice.  Once as a native linux->m68hc11 compiler, and 
 # then as a cross compiled win32->m68hc11 compiler, which depends on the 
 # intermediary one being present, so build that one first
-"${SRCDIR}"/FreeScale-s12x-gcc/src/configure --target=m68hc11 --program-prefix=m68hc11- --disable-nls --with-gnu-as --with-gnu-ld --disable-checking --without-headers --enable-languages=c --prefix="${DSTDIR}"/intermediary && \
+"${SRCDIR}"/FreeScale-s12x-gcc-patched/src/configure --target=m68hc11 --program-prefix=m68hc11- --disable-nls --with-gnu-as --with-gnu-ld --disable-checking --without-headers --enable-languages=c --prefix="${DSTDIR}"/intermediary && \
 make -j${PROCS} &&
 make install && \
 export PATH=$OLDPATH && \
@@ -399,6 +399,7 @@ elif [ ! -d FreeScale-s12x-gcc ] ; then
 	mv FreeScale-s12x-gcc FreeScale-s12x-gcc-patched
 	pushd FreeScale-s12x-gcc-patched >/dev/null
 	patch -p0 < "${CWD}"/patches/gcc-win32.patch
+	patch -p1 < "${CWD}"/patches/regex_c.patch
 	popd >/dev/null
 fi
 popd >/dev/null

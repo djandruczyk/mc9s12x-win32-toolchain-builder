@@ -1,8 +1,6 @@
 Output
-MICRO
 *.zip
 FreeScale*
-gcc*
 newlib*
 BSTAMP
 *-build

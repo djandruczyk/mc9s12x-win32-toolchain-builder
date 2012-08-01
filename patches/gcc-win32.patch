@@ -1,0 +1,12 @@
+diff -ur src.orig/gcc/collect2.c src/gcc/collect2.c
+--- src.orig/gcc/collect2.c	2012-05-14 11:07:08.000000000 -0400
++++ src/gcc/collect2.c	2012-05-14 13:01:41.000000000 -0400
+@@ -1580,7 +1580,7 @@
+   if (redir)
+     {
+       /* Open response file.  */
+-      redir_handle = open (redir, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
++      redir_handle = open (redir, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR|S_IWUSR);
+ 
+       /* Duplicate the stdout and stderr file handles
+ 	 so they can be restored later.  */
