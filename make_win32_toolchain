@@ -16,14 +16,34 @@
 CWD=$(pwd)
 PROCS=5
 
-DSTDIR=${CWD}/toolchain
-BUILDDIR=${CWD}/build
 SRCDIR=${CWD}/sources
-# Global variable for 32/64 bit
-if test `uname -m` = "x86_64" ; then 
-	BITS=64
+HOST_ARCH=`uname -m`
+
+function warn_user {
+echo ""
+echo $*
+echo ""
+exit -1
+}
+
+if [ $# -ne 2 ] ; then
+	warn_user "Invalid args, need <32|64> <all|get_pre_reqs|buildpkg|clean|realclean>"
 else
-	BITS=32
+    if [ "$1" -eq 32 -o "$1" -eq 64 ] ; then
+        BITS=$1
+        BUILDDIR="${CWD}/build${BITS}"
+		DSTDIR="${CWD}/toolchain${BITS}"
+		if [ "$1" -eq 32 ] ; then
+			HOST="i686"
+		fi
+		if [ "$1" -eq 64 ] ; then
+			HOST="x86_64"
+		fi
+        echo "Arch chosen is $1"
+    else
+        echo "Invalid args, expected [32|64] for 32 or 64 bit"
+        exit -1
+    fi
 fi
 
 # Additonal Packages needed to be added..
@@ -83,7 +103,7 @@ fi
 mkdir mc9s12x-cross-build 
 pushd mc9s12x-cross-build >/dev/null
 . cross"${BITS}"
-"${SRCDIR}"/FreeScale-s12x-binutils/configure --build=i686-pc-linux-gnu --host=i686-w"${BITS}"-mingw32  --target=m68hc11 --enable-targets=m68hc11,m68hc12,xgate --disable-nls  --program-prefix=m68hc11- --prefix="${DSTDIR}" && \
+"${SRCDIR}"/FreeScale-s12x-binutils/configure --build="${HOST_ARCH}"-pc-linux-gnu --host="${HOST}"-w"${BITS}"-mingw32  --target=m68hc11 --enable-targets=m68hc11,m68hc12,xgate --disable-nls  --program-prefix=m68hc11- --prefix="${DSTDIR}" && \
 make -j${PROCS} && \
 make install && \
 popd >/dev/null && \
@@ -110,7 +130,7 @@ fi
 mkdir xgate-cross-build
 pushd xgate-cross-build >/dev/null
 . cross"${BITS}"
-"${SRCDIR}"/FreeScale-s12x-binutils/configure --build=i686-pc-linux-gnu --host=i686-w"${BITS}"-mingw32 --target=xgate --enable-targets=xgate --program-prefix=xgate- --disable-nls --prefix="${DSTDIR}" && \
+"${SRCDIR}"/FreeScale-s12x-binutils/configure --build="${HOST_ARCH}"-pc-linux-gnu --host="${HOST}"-w"${BITS}"-mingw32 --target=xgate --enable-targets=xgate --program-prefix=xgate- --disable-nls --prefix="${DSTDIR}" && \
 make -j${PROCS} && \
 make install && \
 . uncross \
@@ -170,9 +190,9 @@ pushd gcc-cross-build >/dev/null
 # intermediary one being present, so build that one first
 OLDPATH=$PATH
 export PATH=$DSTDIR/intermediary/bin:$PATH
-"${SRCDIR}"/FreeScale-s12x-gcc-patched/src/configure --build=i686-pc-linux-gnu --host=i686-w"${BITS}"-mingw32 --disable-multilib --target=m68hc11 --program-prefix=m68hc11- --disable-nls  --without-headers --with-gnu-as --with-gnu-ld --disable-checking --enable-languages=c  --prefix="${DSTDIR}" && \
+"${SRCDIR}"/FreeScale-s12x-gcc-patched/src/configure --build="${HOST_ARCH}"-pc-linux-gnu --host="${HOST}"-w"${BITS}"-mingw32 --disable-multilib --target=m68hc11 --program-prefix=m68hc11- --disable-nls  --without-headers --with-gnu-as --with-gnu-ld --disable-checking --enable-languages=c  --prefix="${DSTDIR}" && \
 # FIX BUG in gcc 3.3.6 regarding canadian crosses
-pushd i686-pc-linux-gnu >/dev/null && \
+pushd "${HOST_ARCH}"-pc-linux-gnu >/dev/null && \
 ln -sf "${SRCDIR}"/FreeScale-s12x-gcc-patched/src/include/ && \
 popd >/dev/null  && \
 make -j${PROCS} && \
@@ -205,7 +225,7 @@ export PATH="${DSTDIR}"/intermediary/bin:"${PATH}"
 echo "Path is $PATH"
 mkdir newlib-build
 pushd newlib-build >/dev/null && \
-"${SRCDIR}"/FreeScale-s12x-newlib/src/configure --build=i686-pc-linux-gnu --target=m68hc11 --disable-multilib --disable-shared --disable-threads --disable-nls --prefix="$DSTDIR" && \
+"${SRCDIR}"/FreeScale-s12x-newlib/src/configure --build="${HOST_ARCH}"-pc-linux-gnu --target=m68hc11 --disable-multilib --disable-shared --disable-threads --disable-nls --prefix="$DSTDIR" && \
 make -j${PROCS} && \
 make install && \
 export PATH="${OLDPATH}" && \
@@ -443,7 +463,7 @@ rm -f "${BUILDDIR}"/support/*.zip
 function add_win32_pkgs {
 pushd "${DSTDIR}" >/dev/null
 for pkg in `echo ${PKGS}` ; do
-	unzip -o "${BUILDDIR}"/support/"${pkg}"
+	unzip -o "${SRCDIR}"/support/"${pkg}"
 done
 rm -rf contrib manifest
 popd >/dev/null
@@ -457,42 +477,31 @@ fi
 DEST=$(echo "${DSTDIR}" |sed -e 's/\//\\\\/g')
 BSTAMP=$(cat "${CWD}"/BSTAMP)
 MICRO=$(cat "${CWD}"/MICRO)
-sed -e s,_DSTDIR_,"${DEST}",g  -e s,_BSTAMP_,"${BSTAMP}",g -e s,_MICRO_,"${MICRO}",g < mc9s12x-toolchain.iss.in > mc9s12x-toolchain.iss
-ISS_FILE=dave/git/mc9s12x-win32-toolchain-builder/mc9s12x-toolchain.iss
+sed -e s,_DSTDIR_,"${DEST}",g  -e s,_BSTAMP_,"${BSTAMP}",g -e s,_MICRO_,"${MICRO}",g < mc9s12x-toolchain${BITS}.iss.in > mc9s12x-toolchain${BITS}.iss
+ISS_FILE=dave/git/mc9s12x-win32-toolchain-builder/mc9s12x-toolchain${BITS}.iss
 DRIVE=L
 
 wine ~/.wine/drive_c/Program\ Files/Inno\ Setup\ 5/ISCC.exe "${DRIVE}":/"${ISS_FILE}"
-mv "${CWD}"/Output/setup.exe "${CWD}"/Output/mc9s12x-ToolChain_"${BSTAMP}"."${MICRO}".exe
+mv "${CWD}"/Output/setup.exe "${CWD}"/Output/mc9s12x-ToolChain_win${BITS}_"${BSTAMP}"."${MICRO}".exe
 popd >/dev/null
-}
-
-function warn_user {
-echo ""
-echo $*
-echo ""
-exit -1
 }
 
 function done_all {
 	echo "
 
 				ALL DONE!!!
-mc9s12x-ToolChain_$(cat ${CWD}/BSTAMP).$(cat ${CWD}/MICRO).exe should be in the ${CWD}/Output Directory
+mc9s12x-ToolChain_win${BITS}_$(cat ${CWD}/BSTAMP).$(cat ${CWD}/MICRO).exe should be in the ${CWD}/Output Directory
 	
 "
 }
 
-if [ $# -ne 1 ] ; then
-	warn_user "Invalid args, need <all|get_pre_reqs|buildpkg|clean|realclean>"
-fi
-
-case "$1" in
+case "$2" in
 	all) 
 	setup
 	dl_binutils
 	dl_gcc
 	dl_newlib
-	download_win32
+	#download_win32
 	build_toolchain 
 	add_win32_pkgs
 	build_win32_pkg
@@ -518,7 +527,7 @@ case "$1" in
 	dl_newlib
 	;;
 	buildpkg)
-	download_win32
+	#download_win32
 	add_win32_pkgs
 	build_win32_pkg
 	;;
@@ -529,6 +538,6 @@ case "$1" in
 	full_cleanup
 	;;
 	*)
-	warn_user "Invalid args, need <all|get_pre_reqs|buildpkg|clean|realclean>"
+	warn_user "Invalid args, need <32|64> <all|get_pre_reqs|buildpkg|clean|realclean>"
 	;;
 esac

@@ -1,9 +1,10 @@
 Output
-*.zip
-FreeScale*
-newlib*
 BSTAMP
-*-build
-toolchain
+build32
+build64
+toolchain32
+toolchain64
 FreeEMS-toolchain.iss
 logfile.txt
+*.iss
+sources
