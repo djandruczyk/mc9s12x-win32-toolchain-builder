@@ -13,8 +13,18 @@
 # NOTE: you'll also need to edit mc9s12x-toolchain.iss to suite your 
 # wine configuration and target paths, if you use "all" or "buildpkg"
 
+#set -x
+
 CWD=$(pwd)
-PROCS=5
+PROCS=`cat /proc/cpuinfo |grep -c ^processor`
+BINUTILS_URI="http://ftp.gnu.org/gnu/binutils/"
+BINUTILS_TAR=binutils-2.24.tar.bz2
+BINUTILS_DIR="binutils-2.24"
+GCC_DIR="s12x-gcc"
+GCC_GIT_BRANCH="tmp-for-dave"
+GCC_GIT_URL="git@git.libreems.org:libreems-suite/s12x-gcc.git"
+NEWLIB_DIR="s12x-newlib"
+NEWLIB_GIT_URL="git@git.libreems.org:libreems-suite/s12x-newlib.git"
 
 SRCDIR=${CWD}/sources
 HOST_ARCH=`uname -m`
@@ -78,7 +88,7 @@ pushd mc9s12x-direct-build >/dev/null
 # intermediary compiler, so we need to build binutils twice, once for 
 # Linux->m68hc11, and once as a crossbuild win32->m68hc11
 # First linux->m68hc11
-"${SRCDIR}"/FreeScale-s12x-binutils/configure --target=m68hc11 --enable-targets=m68hc11,m68hc12,xgate --program-prefix=m68hc11- --disable-nls --prefix="${DSTDIR}"/intermediary && \
+"${SRCDIR}"/"${BINUTILS_DIR}"/configure --target=m68hc11 --enable-targets=m68hc11,m68hc12,xgate --program-prefix=mc9s12x- --disable-nls --prefix="${DSTDIR}"/intermediary && \
 CFLAGS+=-g make -j${PROCS} && \
 make install && \
 popd >/dev/null && \
@@ -103,7 +113,7 @@ fi
 mkdir mc9s12x-cross-build 
 pushd mc9s12x-cross-build >/dev/null
 . cross"${BITS}"
-"${SRCDIR}"/FreeScale-s12x-binutils/configure --build="${HOST_ARCH}"-pc-linux-gnu --host="${HOST}"-w"${BITS}"-mingw32  --target=m68hc11 --enable-targets=m68hc11,m68hc12,xgate --disable-nls  --program-prefix=m68hc11- --prefix="${DSTDIR}" && \
+"${SRCDIR}"/"${BINUTILS_DIR}"/configure --build="${HOST_ARCH}"-pc-linux-gnu --host="${HOST}"-w"${BITS}"-mingw32  --target=m68hc11 --enable-targets=m68hc11,m68hc12,xgate --disable-nls  --program-prefix=mc9s12x- --prefix="${DSTDIR}" && \
 make -j${PROCS} && \
 make install && \
 popd >/dev/null && \
@@ -130,7 +140,7 @@ fi
 mkdir xgate-cross-build
 pushd xgate-cross-build >/dev/null
 . cross"${BITS}"
-"${SRCDIR}"/FreeScale-s12x-binutils/configure --build="${HOST_ARCH}"-pc-linux-gnu --host="${HOST}"-w"${BITS}"-mingw32 --target=xgate --enable-targets=xgate --program-prefix=xgate- --disable-nls --prefix="${DSTDIR}" && \
+"${SRCDIR}"/"${BINUTILS_DIR}"/configure --build="${HOST_ARCH}"-pc-linux-gnu --host="${HOST}"-w"${BITS}"-mingw32 --target=xgate --enable-targets=xgate --program-prefix=xgate- --disable-nls --prefix="${DSTDIR}" && \
 make -j${PROCS} && \
 make install && \
 . uncross \
@@ -159,7 +169,7 @@ export PATH=$DSTDIR/intermediary/bin:$PATH
 # GCC needs to be done twice.  Once as a native linux->m68hc11 compiler, and 
 # then as a cross compiled win32->m68hc11 compiler, which depends on the 
 # intermediary one being present, so build that one first
-"${SRCDIR}"/FreeScale-s12x-gcc-patched/src/configure --target=m68hc11 --program-prefix=m68hc11- --disable-nls --with-gnu-as --with-gnu-ld --disable-checking --without-headers --enable-languages=c --prefix="${DSTDIR}"/intermediary && \
+"${SRCDIR}"/"${GCC_DIR}"/src/configure --target=m68hc11 --program-prefix=mc9s12x- --disable-nls --with-gnu-as --with-gnu-ld --disable-checking --without-headers --enable-languages=c --prefix="${DSTDIR}"/intermediary && \
 make -j${PROCS} &&
 make install && \
 export PATH=$OLDPATH && \
@@ -190,10 +200,10 @@ pushd gcc-cross-build >/dev/null
 # intermediary one being present, so build that one first
 OLDPATH=$PATH
 export PATH=$DSTDIR/intermediary/bin:$PATH
-"${SRCDIR}"/FreeScale-s12x-gcc-patched/src/configure --build="${HOST_ARCH}"-pc-linux-gnu --host="${HOST}"-w"${BITS}"-mingw32 --disable-multilib --target=m68hc11 --program-prefix=m68hc11- --disable-nls  --without-headers --with-gnu-as --with-gnu-ld --disable-checking --enable-languages=c  --prefix="${DSTDIR}" && \
+"${SRCDIR}"/"${GCC_DIR}"/src/configure --build="${HOST_ARCH}"-pc-linux-gnu --host="${HOST}"-w"${BITS}"-mingw32 --disable-multilib --target=m68hc11 --program-prefix=mc9s12x- --disable-nls  --without-headers --with-gnu-as --with-gnu-ld --disable-checking --enable-languages=c  --prefix="${DSTDIR}" && \
 # FIX BUG in gcc 3.3.6 regarding canadian crosses
 pushd "${HOST_ARCH}"-pc-linux-gnu >/dev/null && \
-ln -sf "${SRCDIR}"/FreeScale-s12x-gcc-patched/src/include/ && \
+ln -sf "${SRCDIR}"/"${GCC_DIR}"/src/include/ && \
 popd >/dev/null  && \
 make -j${PROCS} && \
 make install && \
@@ -225,7 +235,7 @@ export PATH="${DSTDIR}"/intermediary/bin:"${PATH}"
 echo "Path is $PATH"
 mkdir newlib-build
 pushd newlib-build >/dev/null && \
-"${SRCDIR}"/FreeScale-s12x-newlib/src/configure --build="${HOST_ARCH}"-pc-linux-gnu --target=m68hc11 --disable-multilib --disable-shared --disable-threads --disable-nls --prefix="$DSTDIR" && \
+"${SRCDIR}"/"${NEWLIB_DIR}"/src/configure --build="${HOST_ARCH}"-pc-linux-gnu --target=m68hc11 --disable-multilib --disable-shared --disable-threads --disable-nls --prefix="$DSTDIR" && \
 make -j${PROCS} && \
 make install && \
 export PATH="${OLDPATH}" && \
@@ -366,24 +376,22 @@ popd >/dev/null
 
 function clean_binutils_sources {
 pushd "${SRCDIR}" >/dev/null
-rm -rf FreeScale-s12x-binutils
+rm -rf "${BINUTILS_DIR}"
 popd >/dev/null
 }
 
 function dl_binutils {
 # checkout seank's FreeScale-s12x-binutils
 pushd "${SRCDIR}" >/dev/null
-echo "Cloning binutils git tree locally"
-if [ ! -d FreeScale-s12x-binutils ] ; then
-	git clone http://github.com/seank/FreeScale-s12x-binutils.git 
-else
-	pushd FreeScale-s12x-binutils >/dev/null
-	git pull
-	popd >/dev/null
+echo "Aquiring binutils"
+md5sum --status -c "${BINUTILS_TAR}".md5
+RESULT=$?
+if [ ${RESULT} -ne 0 ] ; then
+	wget -c  "${BINUTILS_URI}"/"${BINUTILS_TAR}" -O "${BINUTILS_TAR}"
 fi
-pushd FreeScale-s12x-binutils >/dev/null
-git log --date=short |grep Date |head -n1 |awk '{print $2}' > "$CWD/BSTAMP"
-popd >/dev/null
+if [ ! -d "${BINUTILS_DIR}" ] ; then
+	tar xvf "${BINUTILS_TAR}"
+fi
 popd >/dev/null
 }
 
@@ -403,23 +411,23 @@ function clean_gcc_sources {
 # checkout seank's repo for gcc
 pushd "${SRCDIR}" >/dev/null
 rm -rf gcc-*
-rm -rf FreeScale-s12x-gcc*
+rm -rf "${GCC_DIR}"
 popd >/dev/null
 }
 
 function dl_gcc {
 pushd "${SRCDIR}" >/dev/null
-if [ -d FreeScale-s12x-gcc-patched ] ; then
-	pushd FreeScale-s12x-gcc-patched
+if [ -d "${GCC_DIR}" ] ; then
+	pushd "${GCC_DIR}" >/dev/null
 	git pull
-	popd
-elif [ ! -d FreeScale-s12x-gcc ] ; then
+	popd >/dev/null
+elif [ ! -d "${GCC_DIR}" ] ; then
 	echo "Downloading GCC from seank's repo"
-    git clone git://github.com/seank/FreeScale-s12x-gcc.git
-	mv FreeScale-s12x-gcc FreeScale-s12x-gcc-patched
-	pushd FreeScale-s12x-gcc-patched >/dev/null
-	patch -p0 < "${CWD}"/patches/gcc-win32.patch
-	patch -p1 < "${CWD}"/patches/regex_c.patch
+    git clone -b "${GCC_GIT_BRANCH}" "${GCC_GIT_URL}" "${GCC_DIR}"
+#	pushd FreeScale-s12x-gcc-patched >/dev/null
+#	patch -p0 < "${CWD}"/patches/gcc-win32.patch
+#	patch -p1 < "${CWD}"/patches/regex_c.patch
+#	patch -p1 < "${CWD}"/patches/config.gcc.patch
 	popd >/dev/null
 fi
 popd >/dev/null
@@ -436,7 +444,7 @@ popd >/dev/null
 
 function clean_newlib_sources {
 pushd "${SRCDIR}" >/dev/null
-	rm -rf FreeScale-s12x-newlib
+	rm -rf "${NEWLIB_DIR}"
 popd >/dev/null
 }
 
@@ -446,10 +454,10 @@ rm -rf "${DSTDIR}"
 
 function dl_newlib {
 pushd "${SRCDIR}" >/dev/null
-if [ ! -d FreeScale-s12x-newlib ] ; then
-    git clone git://github.com/seank/FreeScale-s12x-newlib.git
+if [ ! -d "${NEWLIB_DIR}" ] ; then
+    git clone "${NEWLIB_GIT_URL}" "${NEWLIB_DIR}"
 else
-	pushd FreeScale-s12x-newlib >/dev/null
+	pushd "${NEWLIB_DIR}" >/dev/null
 	git pull
 	popd >/dev/null
 fi
@@ -470,7 +478,7 @@ popd >/dev/null
 }
 
 function build_win32_pkg {
-pushd "${CWD}"
+pushd "${CWD}" >/dev/null
 if [ -f mc9s12x-toolchain.iss ] ; then
 	rm -f mc9s12x-toolchain.iss
 fi
