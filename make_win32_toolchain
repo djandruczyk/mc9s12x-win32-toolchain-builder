@@ -519,10 +519,9 @@ DEST=$(echo "${DSTDIR}" |sed -e 's/\//\\\\/g')
 BSTAMP=$(cat "${CWD}"/BSTAMP)
 MICRO=$(cat "${CWD}"/MICRO)
 sed -e s,_DSTDIR_,"${DEST}",g  -e s,_BSTAMP_,"${BSTAMP}",g -e s,_MICRO_,"${MICRO}",g < mc9s12x-toolchain${BITS}.iss.in > mc9s12x-toolchain${BITS}.iss
-ISS_FILE=dave/git/mc9s12x-win32-toolchain-builder/mc9s12x-toolchain${BITS}.iss
-DRIVE=L
+ISS_FILE="${CWD}"/mc9s12x-toolchain${BITS}.iss
 
-wine ~/.wine/drive_c/Program\ Files/Inno\ Setup\ 5/ISCC.exe "${DRIVE}":/"${ISS_FILE}"
+iscc "${ISS_FILE}"
 mv "${CWD}"/Output/setup.exe "${CWD}"/Output/mc9s12x-ToolChain_win${BITS}_"${BSTAMP}"."${MICRO}".exe
 popd >/dev/null
 }
