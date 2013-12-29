@@ -1,0 +1,13 @@
+diff --git a/gas/config/tc-m68hc11.c b/gas/config/tc-m68hc11.c
+index 3189121..1ee4510 100644
+--- a/gas/config/tc-m68hc11.c
++++ b/gas/config/tc-m68hc11.c
+@@ -3896,7 +3896,7 @@ m68hc11_relax_frag (segT seg ATTRIBUTE_UNUSED, fragS *fragP,
+       if (fragP->fr_symbol == NULL
+ 	  || S_GET_SEGMENT (fragP->fr_symbol) != absolute_section)
+ 	as_fatal (_("internal inconsistency problem in %s: fr_symbol %lx"),
+-		  __FUNCTION__, (long) fragP->fr_symbol);
++		  __FUNCTION__, (size_t) fragP->fr_symbol);
+       symbolP = fragP->fr_symbol;
+       if (symbol_resolved_p (symbolP))
+ 	as_fatal (_("internal inconsistency problem in %s: resolved symbol"),
