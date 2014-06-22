@@ -60,7 +60,8 @@ else
 fi
 
 # Additonal Packages needed to be added..
-PKGS="gawk-3.1.6-1-bin.zip bc-1.06-2-bin.zip bc-1.06-2-dep.zip coreutils-5.3.0-bin.zip coreutils-5.3.0-dep.zip make-3.81-bin.zip zlib-1.2.3-bin.zip libintl-0.14.4-bin.zip which-2.20-bin.zip"
+#PKGS="gawk-3.1.6-1-bin.zip bc-1.06-2-bin.zip bc-1.06-2-dep.zip coreutils-5.3.0-bin.zip coreutils-5.3.0-dep.zip make-3.81-bin.zip zlib-1.2.3-bin.zip libintl-0.14.4-bin.zip which-2.20-bin.zip"
+PKGS="gawk-3.1.6-1-bin.zip bc-1.06-2-bin.zip bc-1.06-2-dep.zip coreutils-5.3.0-bin.zip coreutils-5.3.0-dep.zip make-3.81-bin.zip libintl-0.14.4-bin.zip which-2.20-bin.zip"
 
 
 function setup {
@@ -71,6 +72,7 @@ if [ ! -d "${SRCDIR}" ] ; then
 	mkdir "${SRCDIR}"
 fi
 mkdir -p "${SRCDIR}/support"
+date +%Y-%m-%d >${CWD}/BSTAMP
 }
 
 function build_s12x_binutils_direct {
@@ -377,15 +379,15 @@ function full_cleanup {
 function download_win32 {
 pushd "${SRCDIR}/support" >/dev/null
 echo "Downloading windows binaries from sourceforge"
-wget -cnv http://sourceforge.net/projects/gnuwin32/files/gawk/3.1.6-1/gawk-3.1.6-1-bin.zip/download -O gawk-3.1.6-1-bin.zip
-wget -cnv http://sourceforge.net/projects/gnuwin32/files/bc/1.06-2/bc-1.06-2-bin.zip/download -O bc-1.06-2-bin.zip
-wget -cnv http://sourceforge.net/projects/gnuwin32/files/bc/1.06-2/bc-1.06-2-dep.zip/download -O bc-1.06-2-dep.zip
-wget -cnv http://sourceforge.net/projects/gnuwin32/files/zlib/1.2.3/zlib-1.2.3-bin.zip/download -O zlib-1.2.3-bin.zip
-wget -cnv http://sourceforge.net/projects/gnuwin32/files/coreutils/5.3.0/coreutils-5.3.0-bin.zip/download -O coreutils-5.3.0-bin.zip
-wget -cnv http://sourceforge.net/projects/gnuwin32/files/coreutils/5.3.0/coreutils-5.3.0-dep.zip/download -O coreutils-5.3.0-dep.zip
-wget -cnv http://sourceforge.net/projects/gnuwin32/files/libintl/0.14.4/libintl-0.14.4-bin.zip/download -O libintl-0.14.4-bin.zip
-wget -cnv http://sourceforge.net/projects/gnuwin32/files/make/3.81/make-3.81-bin.zip/download -O make-3.81-bin.zip
-wget -cnv http://sourceforge.net/projects/gnuwin32/files/which/2.20/which-2.20-bin.zip/download -O which-2.20-bin.zip
+wget -cnv http://downloads.sourceforge.net/project/gnuwin32/gawk/3.1.6-1/gawk-3.1.6-1-bin.zip -O gawk-3.1.6-1-bin.zip
+wget -cnv http://downloads.sourceforge.net/project/gnuwin32/bc/1.06-2/bc-1.06-2-bin.zip -O bc-1.06-2-bin.zip
+wget -cnv http://downloads.sourceforge.net/project/gnuwin32/bc/1.06-2/bc-1.06-2-dep.zip -O bc-1.06-2-dep.zip
+wget -cnv http://downloads.sourceforge.net/project/gnuwin32/zlib/1.2.3/zlib-1.2.3-bin.zip -O zlib-1.2.3-bin.zip
+wget -cnv http://downloads.sourceforge.net/project/gnuwin32/coreutils/5.3.0/coreutils-5.3.0-bin.zip -O coreutils-5.3.0-bin.zip
+wget -cnv http://downloads.sourceforge.net/project/gnuwin32/coreutils/5.3.0/coreutils-5.3.0-dep.zip -O coreutils-5.3.0-dep.zip
+wget -cnv http://downloads.sourceforge.net/project/gnuwin32/libintl/0.14.4/libintl-0.14.4-bin.zip -O libintl-0.14.4-bin.zip
+wget -cnv http://downloads.sourceforge.net/project/gnuwin32/make/3.81/make-3.81-bin.zip -O make-3.81-bin.zip
+wget -cnv http://downloads.sourceforge.net/project/gnuwin32/which/2.20/which-2.20-bin.zip -O which-2.20-bin.zip
 echo "Complete!"
 popd >/dev/null
 }
@@ -422,7 +424,7 @@ fi && \
 if [ ! -d "${BINUTILS_DIR}" ] ; then
 	tar xvf "${BINUTILS_TAR}" && \
 	pushd "${BINUTILS_DIR}" >/dev/null && \
-#	patch -p1 < "${PATCH_DIR}"/"${BINUTILS_PATCH}" &&\
+	patch -p1 < "${PATCH_DIR}"/"${BINUTILS_PATCH}" &&\
 	popd >/dev/null 
 fi && \
 popd >/dev/null 
