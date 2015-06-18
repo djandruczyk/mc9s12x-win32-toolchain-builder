@@ -49,14 +49,14 @@ exit -1
 if [ $# -ne 2 ] ; then
 	warn_user "Invalid args, need <32|64> <all|get_pre_reqs|buildpkg|clean|realclean>"
 else
-    if [ "$1" -eq 32 -o "$1" -eq 64 ] ; then
+    if [ ${1} -eq 32 -o ${1} -eq 64 ] ; then
         BITS=$1
-        BUILDDIR="${CWD}/build${BITS}"
-		DSTDIR="${CWD}/toolchain${BITS}"
-		if [ "$1" -eq 32 ] ; then
+        BUILDDIR=${CWD}/build${BITS}
+		DSTDIR=${CWD}/toolchain${BITS}
+		if [ ${1} -eq 32 ] ; then
 			TARGET_ARCH="i686"
 		fi
-		if [ "$1" -eq 64 ] ; then
+		if [ ${1} -eq 64 ] ; then
 			TARGET_ARCH="x86_64"
 		fi
         echo "Target arch chosen is $1"
@@ -71,17 +71,17 @@ PKGS="gawk-3.1.6-1-bin.zip bc-1.06-2-bin.zip bc-1.06-2-dep.zip coreutils-5.3.0-b
 
 
 function setup {
-if [ ! -d "${BUILDDIR}" ] ; then
-	mkdir "${BUILDDIR}"
+if [ ! -d ${BUILDDIR} ] ; then
+	mkdir ${BUILDDIR}
 fi
-if [ ! -d "${SRCDIR}" ] ; then
-	mkdir "${SRCDIR}"
+if [ ! -d ${SRCDIR} ] ; then
+	mkdir ${SRCDIR}
 fi
-mkdir -p "${SRCDIR}/support"
+mkdir -p ${SRCDIR}/support
 }
 
 function build_s12x_binutils_direct {
-pushd "${BUILDDIR}" >/dev/null
+pushd ${BUILDDIR} >/dev/null
 # Make sure we don't have cross vars set to begin with
 #. uncross
 # Setup crosscompile env vars:
@@ -98,16 +98,16 @@ pushd mc9s12x-direct-build >/dev/null
 # intermediary compiler, so we need to build binutils twice, once for 
 # Linux->m68hc11, and once as a crossbuild win32->m68hc11
 # First linux->m68hc11
-"${SRCDIR}"/"${BINUTILS_DIR}"/configure --target=m68hc11 --enable-targets=m68hc11,m68hc12,xgate --program-prefix=mc9s12x- --disable-nls --prefix="${DSTDIR}"/intermediary && \
+${SRCDIR}/${BINUTILS_DIR}/configure --target=m68hc11 --enable-targets=m68hc11,m68hc12,xgate --program-prefix=mc9s12x- --disable-nls --prefix=${DSTDIR}/intermediary && \
 CFLAGS+=-g make -j${PROCS} && \
 make install && \
 for i in addr2line ar as c++filt elfedit gprof ld.bfd ld nm objcopy objdump ranlib readelf size strings strip ; do \
-	ln -s mc9s12x-$i "${DSTDIR}"/intermediary/bin/m68hc11-$i
+	ln -s mc9s12x-$i ${DSTDIR}/intermediary/bin/m68hc11-$i
 done && \
 popd >/dev/null && \
 popd >/dev/null
 if [ $? -eq 0 ]; then
-	touch "${BUILDDIR}"/mc9s12x-direct-build/GOOD
+	touch ${BUILDDIR}/mc9s12x-direct-build/GOOD
 	return 0
 else
 	return $?
@@ -116,7 +116,7 @@ fi
 
 function build_s12x_binutils_cross {
 # Now enable cross compile env vars and build the windows binaries
-pushd "${BUILDDIR}" >/dev/null
+pushd ${BUILDDIR} >/dev/null
 if [ -f mc9s12x-cross-build/GOOD ] ; then
 	return 0
 fi
@@ -125,19 +125,19 @@ if [ -d mc9s12x-cross-build ] ; then
 fi
 mkdir mc9s12x-cross-build 
 pushd mc9s12x-cross-build >/dev/null
-# . cross"${BITS}"
-"${SRCDIR}"/"${BINUTILS_DIR}"/configure --host="${TARGET_ARCH}-${SUFFIX}" --target=m68hc11 --enable-targets=m68hc11,m68hc12,xgate --disable-nls  --program-prefix=mc9s12x- --prefix="${DSTDIR}" && \
+# . cross${BITS}
+${SRCDIR}/${BINUTILS_DIR}/configure --host=${TARGET_ARCH}-${SUFFIX} --target=m68hc11 --enable-targets=m68hc11,m68hc12,xgate --disable-nls  --program-prefix=mc9s12x- --prefix=${DSTDIR} && \
 make -j${PROCS} && \
 make install && \
 for i in addr2line ar as c++filt elfedit gprof ld.bfd ld nm objcopy objdump ranlib readelf size strings strip ; do \
-	ln -s mc9s12x-$i.exe "${DSTDIR}"/bin/m68hc11-$i.exe
-	ln -s mc9s12x-$i.exe "${DSTDIR}"/bin/m68hc12-$i.exe
+	ln -s mc9s12x-$i.exe ${DSTDIR}/bin/m68hc11-$i.exe
+	ln -s mc9s12x-$i.exe ${DSTDIR}/bin/m68hc12-$i.exe
 done && \
 popd >/dev/null && \
 popd >/dev/null
 # . uncross
 if [ $? -eq 0 ]; then
-	touch "${BUILDDIR}"/mc9s12x-cross-build/GOOD
+	touch ${BUILDDIR}/mc9s12x-cross-build/GOOD
 	return 0
 else
 	return $?
@@ -147,7 +147,7 @@ fi
 function build_xgate_binutils_cross {
 # Make Xgate version, no need to make intermediary for xgate as there is NOT
 # yet a GCC for xgate
-pushd "${BUILDDIR}" >/dev/null
+pushd ${BUILDDIR} >/dev/null
 if [ -f xgate-cross-build/GOOD ] ; then
 	return 0
 fi
@@ -156,15 +156,15 @@ if [ -d xgate-cross-build ] ; then
 fi
 mkdir xgate-cross-build
 pushd xgate-cross-build >/dev/null
-# . cross"${BITS}"
-"${SRCDIR}"/"${BINUTILS_DIR}"/configure --host="${TARGET_ARCH}-${SUFFIX}" --target=xgate --enable-targets=m68hc11,m68hc12,xgate --program-prefix=xgate- --disable-nls --prefix="${DSTDIR}" && \
+# . cross${BITS}
+${SRCDIR}/${BINUTILS_DIR}/configure --host=${TARGET_ARCH}-${SUFFIX} --target=xgate --enable-targets=m68hc11,m68hc12,xgate --program-prefix=xgate- --disable-nls --prefix=${DSTDIR} && \
 make -j${PROCS} && \
 make install && \
 # . uncross \
 popd >/dev/null && \
 popd >/dev/null 
 if [ $? -eq 0 ]; then
-	touch "${BUILDDIR}"/xgate-cross-build/GOOD
+	touch ${BUILDDIR}/xgate-cross-build/GOOD
 	return 0
 else
 	return $?
@@ -172,7 +172,7 @@ fi
 }
 
 function build_intermediary_gcc {
-pushd "${BUILDDIR}" >/dev/null
+pushd ${BUILDDIR} >/dev/null
 if [ -f gcc-intermediary-build/GOOD ] ; then
 	return 0
 fi
@@ -181,26 +181,26 @@ if [ -d gcc-intermediary-build ] ; then
 fi
 mkdir gcc-intermediary-build
 pushd gcc-intermediary-build >/dev/null
-OLDPATH=$PATH
-export PATH=$DSTDIR/intermediary/bin:$PATH
+OLDPATH=${PATH}
+export PATH=${DSTDIR}/intermediary/bin:${PATH}
 # GCC needs to be done twice.  Once as a native linux->m68hc11 compiler, and 
 # then as a cross compiled win32->m68hc11 compiler, which depends on the 
 # intermediary one being present, so build that one first
-"${SRCDIR}"/"${GCC_DIR}"/configure --target=m68hc11 --program-prefix=mc9s12x- --disable-nls --with-gnu-as --with-gnu-ld --disable-checking --without-headers --enable-languages=c --prefix="${DSTDIR}"/intermediary && \
+${SRCDIR}/${GCC_DIR}/configure --target=m68hc11 --program-prefix=mc9s12x- --disable-nls --with-gnu-as --with-gnu-ld --disable-checking --without-headers --enable-languages=c --prefix=${DSTDIR}/intermediary && \
 make -j${PROCS} &&
 make install && \
-mv "${DSTDIR}"/intermediary/bin/m68hc11-gcc "${DSTDIR}"/intermediary/bin/mc9s12x-gcc && \
-mv "${DSTDIR}"/intermediary/bin/m68hc11-cpp "${DSTDIR}"/intermediary/bin/mc9s12x-cpp && \
+mv ${DSTDIR}/intermediary/bin/m68hc11-gcc ${DSTDIR}/intermediary/bin/mc9s12x-gcc && \
+mv ${DSTDIR}/intermediary/bin/m68hc11-cpp ${DSTDIR}/intermediary/bin/mc9s12x-cpp && \
 for i in gcc cpp gcov gccbug ; do \
-	ln -s mc9s12x-$i "${DSTDIR}"/intermediary/bin/m68hc11-$i
-	ln -s mc9s12x-$i "${DSTDIR}"/intermediary/bin/m68hc12-$i
+	ln -s mc9s12x-$i ${DSTDIR}/intermediary/bin/m68hc11-$i
+	ln -s mc9s12x-$i ${DSTDIR}/intermediary/bin/m68hc12-$i
 done && \
-rm -f "${DSTDIR}"/intermediary/bin/m68hc11-gcc-3.3.6* && \
-export PATH=$OLDPATH && \
+rm -f ${DSTDIR}/intermediary/bin/m68hc11-gcc-3.3.6* && \
+export PATH=${OLDPATH} && \
 popd >/dev/null && \
 popd >/dev/null 
 if [ $? -eq 0 ]; then
-	touch "${BUILDDIR}"/gcc-intermediary-build/GOOD
+	touch ${BUILDDIR}/gcc-intermediary-build/GOOD
 	return 0
 else
 	return $?
@@ -208,8 +208,8 @@ fi
 }
 
 function build_cross_gcc {
-pushd "${BUILDDIR}" >/dev/null
-# . cross"${BITS}"
+pushd ${BUILDDIR} >/dev/null
+# . cross${BITS}
 if [ -f gcc-cross-build/GOOD ] ; then
 	return 0
 fi
@@ -221,9 +221,9 @@ pushd gcc-cross-build >/dev/null
 # GCC needs to be done twice.  Once as a native linux->m68hc11 compiler, and 
 # then as a cross compiled win32->m68hc11 compiler, which depends on the 
 # intermediary one being present, so build that one first
-OLDPATH=$PATH
-export PATH=$DSTDIR/intermediary/bin:$PATH
-"${SRCDIR}"/"${GCC_DIR}"/configure --host="${TARGET_ARCH}-${SUFFIX}" --target=m68hc11 --program-prefix=mc9s12x- --disable-nls  --without-headers --with-gnu-as --with-gnu-ld --disable-checking --enable-languages=c  --prefix="${DSTDIR}" && \
+OLDPATH=${PATH}
+export PATH=${DSTDIR}/intermediary/bin:${PATH}
+${SRCDIR}/${GCC_DIR}/configure --host=${TARGET_ARCH}-${SUFFIX} --target=m68hc11 --program-prefix=mc9s12x- --disable-nls  --without-headers --with-gnu-as --with-gnu-ld --disable-checking --enable-languages=c  --prefix=${DSTDIR} && \
 # Need utility from intermediary build
 cp ../gcc-intermediary-build/gcc/gengtype gcc && \
 cp ../gcc-intermediary-build/gcc/fixinc.sh gcc && \
@@ -232,25 +232,25 @@ cp ../gcc-intermediary-build/gcc/xgcc gcc && \
 cp ../gcc-intermediary-build/gcc/gen-protos gcc && \
 make -j${PROCS} && \
 make install && \
-if [ -f "${DSTDIR}"/bin/m68hc11-gcc.exe ] ; then
-	mv "${DSTDIR}"/bin/m68hc11-gcc.exe "${DSTDIR}"/bin/mc9s12x-gcc.exe
+if [ -f ${DSTDIR}/bin/m68hc11-gcc.exe ] ; then
+	mv ${DSTDIR}/bin/m68hc11-gcc.exe ${DSTDIR}/bin/mc9s12x-gcc.exe
 fi && \
-if [ -f "${DSTDIR}"/bin/m68hc11-cpp.exe ] ; then
-	mv "${DSTDIR}"/bin/m68hc11-cpp.exe "${DSTDIR}"/bin/mc9s12x-cpp.exe
+if [ -f ${DSTDIR}/bin/m68hc11-cpp.exe ] ; then
+	mv ${DSTDIR}/bin/m68hc11-cpp.exe ${DSTDIR}/bin/mc9s12x-cpp.exe
 fi && \
-if [ -f "${DSTDIR}"/bin/m68hc11-gcc-3.3.6-* ] ; then
-	rm -f "${DSTDIR}"/bin/m68hc11-gcc-3.3.6-*
+if [ -f ${DSTDIR}/bin/m68hc11-gcc-3.3.6-* ] ; then
+	rm -f ${DSTDIR}/bin/m68hc11-gcc-3.3.6-*
 fi && \
 for i in cpp gcc gccbug gcov ; do \
-	ln -s mc9s12x-$i.exe "${DSTDIR}"/bin/m68hc11-$i.exe
-	ln -s mc9s12x-$i.exe "${DSTDIR}"/bin/m68hc12-$i.exe
+	ln -s mc9s12x-$i.exe ${DSTDIR}/bin/m68hc11-$i.exe
+	ln -s mc9s12x-$i.exe ${DSTDIR}/bin/m68hc12-$i.exe
 done && \
-export PATH="${OLDPATH}" && \
+export PATH=${OLDPATH} && \
 popd >/dev/null && \
 # . uncross && \
 popd >/dev/null
 if [ $? -eq 0 ]; then
-	touch "${BUILDDIR}"/gcc-cross-build/GOOD
+	touch ${BUILDDIR}/gcc-cross-build/GOOD
 	return 0
 else
 	return $?
@@ -260,7 +260,7 @@ fi
 function build_direct_newlib {
 #Now newlib
 #RESET ENV VARS back to normal, as newlib sets things up its own way
-pushd "${BUILDDIR}" >/dev/null
+pushd ${BUILDDIR} >/dev/null
 # . uncross
 if [ -f newlib-build/GOOD ] ; then
 	return 0
@@ -268,19 +268,19 @@ fi
 if [ -d newlib-build ] ; then
 	rm -rf newlib-build
 fi
-OLDPATH="${PATH}"
-export PATH="${DSTDIR}"/intermediary/bin:"${PATH}"
-echo "Path is $PATH"
+OLDPATH=${PATH}
+export PATH=${DSTDIR}/intermediary/bin:${PATH}
+echo "Path is ${PATH}"
 mkdir newlib-build
 pushd newlib-build >/dev/null && \
-"${SRCDIR}"/"${NEWLIB_DIR}"/src/configure --host="${TARGET_ARCH}-${SUFFIX}" --target=m68hc11 --disable-multilib --disable-shared --disable-threads --disable-nls --prefix="$DSTDIR" && \
+${SRCDIR}/${NEWLIB_DIR}/src/configure --host=${TARGET_ARCH}-${SUFFIX} --target=m68hc11 --disable-multilib --disable-shared --disable-threads --disable-nls --prefix=${DSTDIR} && \
 make -j${PROCS} && \
 make install && \
-export PATH="${OLDPATH}" && \
+export PATH=${OLDPATH} && \
 popd >/dev/null && \
 popd >/dev/null
 if [ $? -eq 0 ]; then
-	touch "${BUILDDIR}"/newlib-build/GOOD
+	touch ${BUILDDIR}/newlib-build/GOOD
 	return 0
 else
 	return $?
@@ -290,13 +290,13 @@ fi
 
 function build_toolchain {
 # Make a clean TARGET location to stick everything
-if [ ! -d "${DSTDIR}" ]; then
-	mkdir "${DSTDIR}"
+if [ ! -d ${DSTDIR} ]; then
+	mkdir ${DSTDIR}
 else
 	echo "${DSTDIR} ALREADY EXISTS, this may not be what you want!!!"
 	for i in `seq 5 -1 1` ; do echo -n "." ; sleep 1 ; done ; echo ""
 fi
-echo "Target is ${DSTDIR}"	
+echo "Target is ${DSTDIR}"
 build_s12x_binutils_direct
 res=$?
 binutils_direct_mc9s12x_res=$res
@@ -378,13 +378,13 @@ function full_cleanup {
 	clean_newlib_sources
 	clean_binutils_sources
 	clean_dest
-	rm -f "${CWD}"/mc9s12x-toolchain.iss
-	rm -f "${CWD}"/BSTAMP
+	rm -f ${CWD}/mc9s12x-toolchain.iss
+	rm -f ${CWD}/BSTAMP
 	echo "All source and build dirs cleaned out"
 }
 
 function download_win32 {
-pushd "${SRCDIR}/support" >/dev/null
+pushd ${SRCDIR}/support >/dev/null
 echo "Downloading windows binaries from sourceforge"
 wget -cnv http://sourceforge.net/projects/gnuwin32/files/gawk/3.1.6-1/gawk-3.1.6-1-bin.zip/download -O gawk-3.1.6-1-bin.zip
 wget -cnv http://sourceforge.net/projects/gnuwin32/files/bc/1.06-2/bc-1.06-2-bin.zip/download -O bc-1.06-2-bin.zip
@@ -400,45 +400,47 @@ popd >/dev/null
 }
 
 function clean_binutils {
-pushd "${BUILDDIR}" >/dev/null
-if [ -d mc9s12x-direct-build ] ; then
-	rm -rf mc9s12x-direct-build
+if [ -d ${BUILDDIR} ] ; then
+	pushd ${BUILDDIR} >/dev/null
+	if [ -d mc9s12x-direct-build ] ; then
+		rm -rf mc9s12x-direct-build
+	fi
+	if [ -d mc9s12x-cross-build ] ; then
+		rm -rf mc9s12x-cross-build
+	fi
+	if [ -d xgate-cross-build ] ; then
+		rm -rf xgate-cross-build
+	fi
+	popd >/dev/null
 fi
-if [ -d mc9s12x-cross-build ] ; then
-	rm -rf mc9s12x-cross-build
-fi
-if [ -d xgate-cross-build ] ; then
-	rm -rf xgate-cross-build
-fi
-popd >/dev/null
 }
 
 function clean_binutils_sources {
-pushd "${SRCDIR}" >/dev/null
-rm -rf "${BINUTILS_DIR}"
+pushd ${SRCDIR} >/dev/null
+rm -rf ${BINUTILS_DIR}
 popd >/dev/null
 }
 
 function dl_binutils {
 # checkout seank's FreeScale-s12x-binutils
-pushd "${SRCDIR}" >/dev/null
-md5sum --status -c "${BINUTILS_TAR}".md5
+pushd ${SRCDIR} >/dev/null
+md5sum --status -c ${BINUTILS_TAR}.md5
 RESULT=$?
 if [ ${RESULT} -ne 0 ] ; then
 	echo "Aquiring binutils"
-	wget -c  "${BINUTILS_URI}"/"${BINUTILS_TAR}" -O "${BINUTILS_TAR}"
+	wget -c  ${BINUTILS_URI}/${BINUTILS_TAR} -O ${BINUTILS_TAR}
 fi && \
-if [ ! -d "${BINUTILS_DIR}" ] ; then
-	tar xvf "${BINUTILS_TAR}" && \
-	pushd "${BINUTILS_DIR}" >/dev/null && \
-#	patch -p1 < "${PATCH_DIR}"/"${BINUTILS_PATCH}" &&\
+if [ ! -d ${BINUTILS_DIR} ] ; then
+	tar xvf ${BINUTILS_TAR} && \
+	pushd ${BINUTILS_DIR} >/dev/null && \
+#	patch -p1 < ${PATCH_DIR}/${BINUTILS_PATCH} &&\
 	popd >/dev/null 
 fi && \
 popd >/dev/null 
 }
 
 function clean_gcc {
-pushd "${BUILDDIR}" >/dev/null
+pushd ${BUILDDIR} >/dev/null
 rm -rf gcc-*
 if [ -d gcc-intermediary-build ] ; then
 	rm -rf gcc-intermediary-build
@@ -451,24 +453,24 @@ popd >/dev/null
 
 function clean_gcc_sources {
 # checkout seank's repo for gcc
-pushd "${SRCDIR}" >/dev/null
+pushd ${SRCDIR} >/dev/null
 rm -rf gcc-*
-rm -rf "${GCC_DIR}"
+rm -rf ${GCC_DIR}
 popd >/dev/null
 }
 
 function dl_gcc {
-pushd "${SRCDIR}" >/dev/null
-md5sum --status -c "${GCC_TAR}".md5                                        
+pushd ${SRCDIR} >/dev/null
+wget -q -c ${GCC_URI}/md5.sum -O - |grep ${GCC_TAR} |md5sum --status -c -
 if [ ${RESULT} -ne 0 ] ; then
 	echo "Aquiring GCC"
-	wget -c  "${GCC_URI}"/"${GCC_TAR}" -O "${GCC_TAR}"
+	wget -c  ${GCC_URI}/${GCC_TAR} -O ${GCC_TAR}
 fi && \
-if [ ! -d "${GCC_DIR}" ] ; then
-	tar xvf "${GCC_TAR}" && \
-	if [ ! -f "${GCC_DIR}/.patched" ] ; then
-		pushd "${GCC_DIR}" >/dev/null && \
-	    patch -p1 < "${PATCH_DIR}"/"${GCC_PATCH}" &&\
+if [ ! -d ${GCC_DIR} ] ; then
+	tar xvf ${GCC_TAR} && \
+	if [ ! -f ${GCC_DIR}/.patched ] ; then
+		pushd ${GCC_DIR} >/dev/null && \
+	    patch -p1 < ${PATCH_DIR}/${GCC_PATCH} &&\
 		touch .patched
 		popd >/dev/null
 	fi
@@ -477,7 +479,7 @@ popd >/dev/null
 }
 
 function clean_newlib {
-pushd "${BUILDDIR}" >/dev/null
+pushd ${BUILDDIR} >/dev/null
 # I used the sources from newlib-m68hc1x from ubuntu/debian
 if [ -d newlib-build ] ; then
 	rm -rf newlib-build
@@ -486,21 +488,21 @@ popd >/dev/null
 }
 
 function clean_newlib_sources {
-pushd "${SRCDIR}" >/dev/null
-	rm -rf "${NEWLIB_DIR}"
+pushd ${SRCDIR} >/dev/null
+	rm -rf ${NEWLIB_DIR}
 popd >/dev/null
 }
 
 function clean_dest {
-rm -rf "${DSTDIR}"
+rm -rf ${DSTDIR}
 }
 
 function dl_newlib {
-pushd "${SRCDIR}" >/dev/null
-if [ ! -d "${NEWLIB_DIR}" ] ; then
-    git clone "${NEWLIB_GIT_URL}" "${NEWLIB_DIR}"
+pushd ${SRCDIR} >/dev/null
+if [ ! -d ${NEWLIB_DIR} ] ; then
+    git clone ${NEWLIB_GIT_URL} ${NEWLIB_DIR}
 else
-	pushd "${NEWLIB_DIR}" >/dev/null
+	pushd ${NEWLIB_DIR} >/dev/null
 	git pull
 	popd >/dev/null
 fi
@@ -508,31 +510,31 @@ popd >/dev/null
 }
 
 function clean_zips {
-rm -f "${BUILDDIR}"/support/*.zip
+rm -f ${BUILDDIR}/support/*.zip
 }
 
 function add_win32_pkgs {
-pushd "${DSTDIR}" >/dev/null
+pushd ${DSTDIR} >/dev/null
 for pkg in `echo ${PKGS}` ; do
-	unzip -o "${SRCDIR}"/support/"${pkg}"
+	unzip -o ${SRCDIR}/support/${pkg}
 done
 rm -rf contrib manifest
 popd >/dev/null
 }
 
 function build_win32_pkg {
-pushd "${CWD}" >/dev/null
+pushd ${CWD} >/dev/null
 if [ -f mc9s12x-toolchain.iss ] ; then
 	rm -f mc9s12x-toolchain.iss
 fi
-DEST=$(echo "${DSTDIR}" |sed -e 's/\//\\\\/g')
-BSTAMP=$(cat "${CWD}"/BSTAMP)
-MICRO=$(cat "${CWD}"/MICRO)
-sed -e s,_DSTDIR_,"${DEST}",g  -e s,_BSTAMP_,"${BSTAMP}",g -e s,_MICRO_,"${MICRO}",g < mc9s12x-toolchain${BITS}.iss.in > mc9s12x-toolchain${BITS}.iss
-ISS_FILE="${CWD}"/mc9s12x-toolchain${BITS}.iss
+DEST=$(echo ${DSTDIR} |sed -e 's/\//\\\\/g')
+BSTAMP=$(cat ${CWD}/BSTAMP)
+MICRO=$(cat ${CWD}/MICRO)
+sed -e s,_DSTDIR_,${DEST},g  -e s,_BSTAMP_,${BSTAMP},g -e s,_MICRO_,${MICRO},g < mc9s12x-toolchain${BITS}.iss.in > mc9s12x-toolchain${BITS}.iss
+ISS_FILE=${CWD}/mc9s12x-toolchain${BITS}.iss
 
-iscc "${ISS_FILE}"
-mv "${CWD}"/Output/setup.exe "${CWD}"/Output/mc9s12x-ToolChain_win${BITS}_"${BSTAMP}"."${MICRO}".exe
+iscc ${ISS_FILE}
+mv ${CWD}/Output/setup.exe ${CWD}/Output/mc9s12x-ToolChain_win${BITS}_${BSTAMP}.${MICRO}.exe
 popd >/dev/null
 }
 
@@ -545,7 +547,7 @@ mc9s12x-ToolChain_win${BITS}_$(cat ${CWD}/BSTAMP).$(cat ${CWD}/MICRO).exe should
 "
 }
 
-case "$2" in
+case ${2} in
 	all) 
 	setup
 	dl_binutils
