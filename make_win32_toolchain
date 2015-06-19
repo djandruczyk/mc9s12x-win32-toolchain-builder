@@ -18,13 +18,14 @@
 CWD=$(pwd)
 PROCS=`cat /proc/cpuinfo |grep -c ^processor`
 BINUTILS_URI="http://ftp.gnu.org/gnu/binutils/"
-BINUTILS_TAR=binutils-2.24.tar.bz2
-BINUTILS_DIR="binutils-2.24"
+BINUTILS_TAR=binutils-2.25.tar.bz2
+BINUTILS_DIR="binutils-2.25"
 BINUTILS_PATCH="tc-m68hc11.patch"
 GCC_URI="http://www.netgull.com/gcc/releases/gcc-3.3.6/"                        
 GCC_TAR="gcc-3.3.6.tar.bz2"
 GCC_DIR="gcc-3.3.6"
-GCC_PATCH="seank_rollup_20131231.patch"
+GCC_PATCH_1="config.gcc.patch"
+GCC_PATCH_2="seank_rollup_20131231.patch"
 #GCC_DIR="s12x-gcc"
 #GCC_GIT_BRANCH="tmp-for-dave"
 #GCC_GIT_URL="http://gitlab.com/libreems-suite/s12x-gcc.git"
@@ -54,10 +55,24 @@ else
         BUILDDIR=${CWD}/build${BITS}
 		DSTDIR=${CWD}/toolchain${BITS}
 		if [ ${1} -eq 32 ] ; then
-			TARGET_ARCH="i686"
+			if [ ! -f /opt/mingw32/bin/i686-w64-mingw32-gcc ] ; then
+				echo "You don't have mingw installed at /opt/mingw32, see README"
+				exit 1
+			else
+				ORIG_PATH=${PATH}
+				export PATH=/opt/mingw32/bin:${PATH}
+				TARGET_ARCH="i686"
+			fi
 		fi
 		if [ ${1} -eq 64 ] ; then
-			TARGET_ARCH="x86_64"
+			if [ ! -f /opt/mingw64/bin/x86_64-w64-mingw32-gcc ] ; then
+				echo "You don't have mingw installed at /opt/mingw64, see README"
+				exit 1
+			else
+				ORIG_PATH=${PATH}
+				export PATH=/opt/mingw64/bin:${PATH}
+				TARGET_ARCH="x86_64"
+			fi
 		fi
         echo "Target arch chosen is $1"
     else
@@ -86,14 +101,14 @@ pushd ${BUILDDIR} >/dev/null
 #. uncross
 # Setup crosscompile env vars:
 # First: build binutils for 9s12x
-if [ -f mc9s12x-direct-build/GOOD ] ; then
+if [ -f binutils-direct-build/GOOD ] ; then
 	return 0
 fi
-if [ -d mc9s12x-direct-build ] ; then
-	rm -rf mc9s12x-direct-build
+if [ -d binutils-direct-build ] ; then
+	rm -rf binutils-direct-build
 fi
-mkdir mc9s12x-direct-build 
-pushd mc9s12x-direct-build >/dev/null
+mkdir binutils-direct-build 
+pushd binutils-direct-build >/dev/null
 # GCC needs a direct linux->m68hc11 assembler for its canadian cross
 # intermediary compiler, so we need to build binutils twice, once for 
 # Linux->m68hc11, and once as a crossbuild win32->m68hc11
@@ -107,7 +122,7 @@ done && \
 popd >/dev/null && \
 popd >/dev/null
 if [ $? -eq 0 ]; then
-	touch ${BUILDDIR}/mc9s12x-direct-build/GOOD
+	touch ${BUILDDIR}/binutils-direct-build/GOOD
 	return 0
 else
 	return $?
@@ -117,14 +132,14 @@ fi
 function build_s12x_binutils_cross {
 # Now enable cross compile env vars and build the windows binaries
 pushd ${BUILDDIR} >/dev/null
-if [ -f mc9s12x-cross-build/GOOD ] ; then
+if [ -f binutils-cross-build/GOOD ] ; then
 	return 0
 fi
-if [ -d mc9s12x-cross-build ] ; then
-	rm -rf mc9s12x-cross-build
+if [ -d binutils-cross-build ] ; then
+	rm -rf binutils-cross-build
 fi
-mkdir mc9s12x-cross-build 
-pushd mc9s12x-cross-build >/dev/null
+mkdir binutils-cross-build 
+pushd binutils-cross-build >/dev/null
 # . cross${BITS}
 ${SRCDIR}/${BINUTILS_DIR}/configure --host=${TARGET_ARCH}-${SUFFIX} --target=m68hc11 --enable-targets=m68hc11,m68hc12,xgate --disable-nls  --program-prefix=mc9s12x- --prefix=${DSTDIR} && \
 make -j${PROCS} && \
@@ -137,7 +152,7 @@ popd >/dev/null && \
 popd >/dev/null
 # . uncross
 if [ $? -eq 0 ]; then
-	touch ${BUILDDIR}/mc9s12x-cross-build/GOOD
+	touch ${BUILDDIR}/binutils-cross-build/GOOD
 	return 0
 else
 	return $?
@@ -433,7 +448,7 @@ fi && \
 if [ ! -d ${BINUTILS_DIR} ] ; then
 	tar xvf ${BINUTILS_TAR} && \
 	pushd ${BINUTILS_DIR} >/dev/null && \
-#	patch -p1 < ${PATCH_DIR}/${BINUTILS_PATCH} &&\
+	patch -p1 < ${PATCH_DIR}/${BINUTILS_PATCH} &&\
 	popd >/dev/null 
 fi && \
 popd >/dev/null 
@@ -470,7 +485,8 @@ if [ ! -d ${GCC_DIR} ] ; then
 	tar xvf ${GCC_TAR} && \
 	if [ ! -f ${GCC_DIR}/.patched ] ; then
 		pushd ${GCC_DIR} >/dev/null && \
-	    patch -p1 < ${PATCH_DIR}/${GCC_PATCH} &&\
+	    patch -p2 < ${PATCH_DIR}/${GCC_PATCH_1} &&\
+	    patch -p1 < ${PATCH_DIR}/${GCC_PATCH_2} &&\
 		touch .patched
 		popd >/dev/null
 	fi
@@ -528,7 +544,7 @@ if [ -f mc9s12x-toolchain.iss ] ; then
 	rm -f mc9s12x-toolchain.iss
 fi
 DEST=$(echo ${DSTDIR} |sed -e 's/\//\\\\/g')
-BSTAMP=$(cat ${CWD}/BSTAMP)
+BSTAMP=`date +%Y-%m-%d`
 MICRO=$(cat ${CWD}/MICRO)
 sed -e s,_DSTDIR_,${DEST},g  -e s,_BSTAMP_,${BSTAMP},g -e s,_MICRO_,${MICRO},g < mc9s12x-toolchain${BITS}.iss.in > mc9s12x-toolchain${BITS}.iss
 ISS_FILE=${CWD}/mc9s12x-toolchain${BITS}.iss
@@ -542,7 +558,7 @@ function done_all {
 	echo "
 
 				ALL DONE!!!
-mc9s12x-ToolChain_win${BITS}_$(cat ${CWD}/BSTAMP).$(cat ${CWD}/MICRO).exe should be in the ${CWD}/Output Directory
+mc9s12x-ToolChain_win${BITS}_${BSTAMP}.${MICRO}.exe should be in the ${CWD}/Output Directory
 	
 "
 }

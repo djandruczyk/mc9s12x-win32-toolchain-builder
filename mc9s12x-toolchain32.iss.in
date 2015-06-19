@@ -7,7 +7,8 @@ UsePreviousAppDir=1
 UsePreviousGroup=1
 ChangesEnvironment=true
 
-Compression=lzma
+; Compression=lzma2/fast
+Compression=lzma2
 SolidCompression=yes
 ; Page 0: Initial setup. Disable with DisableStartupPrompt
 DisableStartupPrompt=Yes
@@ -23,7 +24,7 @@ LicenseFile=.\LICENSE
 Name: modifypath; Description: Add application directory to your environmental path, which is required to easily call GCC without needing absolute paths;  Flags:
 
 [Files]
-Source: "z:\opt\crossroot32\bin\*zlib*.dll"; DestDir: "{app}\bin"; Flags: ignoreversion                                                       
+;Source: "z:\opt\crossroot32\bin\*zlib*.dll"; DestDir: "{app}\bin"; Flags: ignoreversion                                                       
 Source: "z:_DSTDIR_\*.*"; DestDir: "{app}"; Excludes: "*intermediary*"; Flags: recursesubdirs createallsubdirs ignoreversion
 
 [Icons]

@@ -5,20 +5,20 @@
 # 
 # This runs under linux (x86) and builds a Win32 toolchain including:
 #	binutils (both 68hc11 adn xgate cores)
-#	gcc 3.3.6 (68hc11 only)
+#	gcc 3.3.6 (68hc11 and 68hc12 cores only)
 #	newlib
+#	Tools for compiling under windows
 #
 #
-# This reauires the following packages and maybe more
-# autoconf automake dpkg-source texinfo mingw32-runtime mingw32 
-# mingw32-binutils build-essential autoconf automake
+# This reauires the MingW-W64 compilers to already be installed
+# in /opt/mingw32 (32 bit target) and /opt/mingw64 (64 bit target)
 #
-# A minor edit is required to:
-# /usr/i586-mingw32msvc/include/stdint.h on line75 to make Gcc compile
-# REPLACE ->  typedef unsigned int uintptr_t;
-# WITH    ->  typedef int uintptr_t;
+# See http://www.blogcompiler.com/2010/07/11/compile-for-windows-on-linux/
 #
-# the script make_win32_toolchain assumes a destination path of "/target2"
-# please modify it to taste...
+# Versions used are :
+# mingw-w64-bin_x86_64-linux_20131227.tar.bz2 (64 bit target)
+# mingw-w32-bin_x86_64-linux_20131227.tar.bz2 (32 bit target)
+#
+#
 
 
