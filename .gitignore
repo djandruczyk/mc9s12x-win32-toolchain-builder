@@ -4,7 +4,7 @@ build32
 build64
 toolchain32
 toolchain64
-FreeEMS-toolchain.iss
 logfile.txt
-*.iss
+mc9s12x-toolchain32.iss
+mc9s12x-toolchain32.iss
 sources

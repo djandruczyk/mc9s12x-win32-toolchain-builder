@@ -1,12 +1,11 @@
 #!/bin/bash 
+#
 # Making mc9s12x Crosstools for windows from linux:
 #
-# David J. Andruczyk, 2010
+# David J. Andruczyk, 2010-2015
 #
-# This REQUIRES that you have dpkg-dev,texinfo mingw32, mingw32-binutils and 
-# mingw32-runtime installed and working. (preferrable from the vendor
-# repos and not from source as the paths will be different breaking '
-# the cross/uncross cripts)
+# This REQUIRES that you have build-essential and the mingw-w64 cross-compiler
+# toolchains installed (SEE README)
 #
 
 # ADJUST THIS TO SUIT
@@ -17,18 +16,15 @@
 
 CWD=$(pwd)
 PROCS=`cat /proc/cpuinfo |grep -c ^processor`
-BINUTILS_URI="http://ftp.gnu.org/gnu/binutils/"
-BINUTILS_TAR=binutils-2.25.tar.bz2
+BINUTILS_URI="http://ftp.gnu.org/gnu/binutils"
+BINUTILS_TAR="binutils-2.25.tar.bz2"
 BINUTILS_DIR="binutils-2.25"
 BINUTILS_PATCH="tc-m68hc11.patch"
-GCC_URI="http://www.netgull.com/gcc/releases/gcc-3.3.6/"                        
+GCC_URI="http://www.netgull.com/gcc/releases/gcc-3.3.6"
 GCC_TAR="gcc-3.3.6.tar.bz2"
 GCC_DIR="gcc-3.3.6"
 GCC_PATCH_1="config.gcc.patch"
 GCC_PATCH_2="seank_rollup_20131231.patch"
-#GCC_DIR="s12x-gcc"
-#GCC_GIT_BRANCH="tmp-for-dave"
-#GCC_GIT_URL="http://gitlab.com/libreems-suite/s12x-gcc.git"
 NEWLIB_DIR="s12x-newlib"
 NEWLIB_GIT_URL="http://gitlab.com/libreems-suite/s12x-newlib.git"
 
@@ -44,6 +40,7 @@ function warn_user {
 echo ""
 echo $*
 echo ""
+export PATH=${ORIG_PATH}
 exit -1
 }
 
@@ -89,10 +86,9 @@ function setup {
 if [ ! -d ${BUILDDIR} ] ; then
 	mkdir ${BUILDDIR}
 fi
-if [ ! -d ${SRCDIR} ] ; then
-	mkdir ${SRCDIR}
+if [ ! -d ${SRCDIR}/support ] ; then
+	mkdir -p ${SRCDIR}/support
 fi
-mkdir -p ${SRCDIR}/support
 }
 
 function build_s12x_binutils_direct {
@@ -101,14 +97,14 @@ pushd ${BUILDDIR} >/dev/null
 #. uncross
 # Setup crosscompile env vars:
 # First: build binutils for 9s12x
-if [ -f binutils-direct-build/GOOD ] ; then
+if [ -f binutils-mc9s12x-direct-build/GOOD ] ; then
 	return 0
 fi
-if [ -d binutils-direct-build ] ; then
-	rm -rf binutils-direct-build
+if [ -d binutils-mc9s12x-direct-build ] ; then
+	rm -rf binutils-mc9s12x-direct-build
 fi
-mkdir binutils-direct-build 
-pushd binutils-direct-build >/dev/null
+mkdir binutils-mc9s12x-direct-build 
+pushd binutils-mc9s12x-direct-build >/dev/null
 # GCC needs a direct linux->m68hc11 assembler for its canadian cross
 # intermediary compiler, so we need to build binutils twice, once for 
 # Linux->m68hc11, and once as a crossbuild win32->m68hc11
@@ -122,7 +118,7 @@ done && \
 popd >/dev/null && \
 popd >/dev/null
 if [ $? -eq 0 ]; then
-	touch ${BUILDDIR}/binutils-direct-build/GOOD
+	touch ${BUILDDIR}/binutils-mc9s12x-direct-build/GOOD
 	return 0
 else
 	return $?
@@ -132,14 +128,14 @@ fi
 function build_s12x_binutils_cross {
 # Now enable cross compile env vars and build the windows binaries
 pushd ${BUILDDIR} >/dev/null
-if [ -f binutils-cross-build/GOOD ] ; then
+if [ -f binutils-mc9s12x-cross-build/GOOD ] ; then
 	return 0
 fi
-if [ -d binutils-cross-build ] ; then
-	rm -rf binutils-cross-build
+if [ -d binutils-mc9s12x-cross-build ] ; then
+	rm -rf binutils-mc9s12x-cross-build
 fi
-mkdir binutils-cross-build 
-pushd binutils-cross-build >/dev/null
+mkdir binutils-mc9s12x-cross-build 
+pushd binutils-mc9s12x-cross-build >/dev/null
 # . cross${BITS}
 ${SRCDIR}/${BINUTILS_DIR}/configure --host=${TARGET_ARCH}-${SUFFIX} --target=m68hc11 --enable-targets=m68hc11,m68hc12,xgate --disable-nls  --program-prefix=mc9s12x- --prefix=${DSTDIR} && \
 make -j${PROCS} && \
@@ -152,7 +148,7 @@ popd >/dev/null && \
 popd >/dev/null
 # . uncross
 if [ $? -eq 0 ]; then
-	touch ${BUILDDIR}/binutils-cross-build/GOOD
+	touch ${BUILDDIR}/binutils-mc9s12x-cross-build/GOOD
 	return 0
 else
 	return $?
@@ -163,14 +159,14 @@ function build_xgate_binutils_cross {
 # Make Xgate version, no need to make intermediary for xgate as there is NOT
 # yet a GCC for xgate
 pushd ${BUILDDIR} >/dev/null
-if [ -f xgate-cross-build/GOOD ] ; then
+if [ -f binutils-xgate-cross-build/GOOD ] ; then
 	return 0
 fi
-if [ -d xgate-cross-build ] ; then
-	rm -rf xgate-cross-build
+if [ -d binutils-xgate-cross-build ] ; then
+	rm -rf binutils-xgate-cross-build
 fi
-mkdir xgate-cross-build
-pushd xgate-cross-build >/dev/null
+mkdir binutils-xgate-cross-build
+pushd binutils-xgate-cross-build >/dev/null
 # . cross${BITS}
 ${SRCDIR}/${BINUTILS_DIR}/configure --host=${TARGET_ARCH}-${SUFFIX} --target=xgate --enable-targets=m68hc11,m68hc12,xgate --program-prefix=xgate- --disable-nls --prefix=${DSTDIR} && \
 make -j${PROCS} && \
@@ -179,7 +175,7 @@ make install && \
 popd >/dev/null && \
 popd >/dev/null 
 if [ $? -eq 0 ]; then
-	touch ${BUILDDIR}/xgate-cross-build/GOOD
+	touch ${BUILDDIR}/binutils-xgate-cross-build/GOOD
 	return 0
 else
 	return $?
@@ -206,7 +202,7 @@ make -j${PROCS} &&
 make install && \
 mv ${DSTDIR}/intermediary/bin/m68hc11-gcc ${DSTDIR}/intermediary/bin/mc9s12x-gcc && \
 mv ${DSTDIR}/intermediary/bin/m68hc11-cpp ${DSTDIR}/intermediary/bin/mc9s12x-cpp && \
-for i in gcc cpp gcov gccbug ; do \
+for i in gcc cpp gcov ; do \
 	ln -s mc9s12x-$i ${DSTDIR}/intermediary/bin/m68hc11-$i
 	ln -s mc9s12x-$i ${DSTDIR}/intermediary/bin/m68hc12-$i
 done && \
@@ -238,13 +234,13 @@ pushd gcc-cross-build >/dev/null
 # intermediary one being present, so build that one first
 OLDPATH=${PATH}
 export PATH=${DSTDIR}/intermediary/bin:${PATH}
-${SRCDIR}/${GCC_DIR}/configure --host=${TARGET_ARCH}-${SUFFIX} --target=m68hc11 --program-prefix=mc9s12x- --disable-nls  --without-headers --with-gnu-as --with-gnu-ld --disable-checking --enable-languages=c  --prefix=${DSTDIR} && \
+${SRCDIR}/${GCC_DIR}/configure --build=${HOST_ARCH}-pc-linux-gnu --host=${TARGET_ARCH}-${SUFFIX} --target=m68hc11 --program-prefix=mc9s12x- --disable-nls  --without-headers --with-gnu-as --with-gnu-ld --disable-checking --enable-languages=c  --prefix=${DSTDIR} && \
 # Need utility from intermediary build
-cp ../gcc-intermediary-build/gcc/gengtype gcc && \
-cp ../gcc-intermediary-build/gcc/fixinc.sh gcc && \
-cp ../gcc-intermediary-build/gcc/fixinc/fixincl gcc/fixinc/ && \
-cp ../gcc-intermediary-build/gcc/xgcc gcc && \
-cp ../gcc-intermediary-build/gcc/gen-protos gcc && \
+#cp ../gcc-intermediary-build/gcc/gengtype gcc && \
+#cp ../gcc-intermediary-build/gcc/fixinc.sh gcc && \
+#cp ../gcc-intermediary-build/gcc/fixinc/fixincl gcc/fixinc/ && \
+#cp ../gcc-intermediary-build/gcc/xgcc gcc && \
+#cp ../gcc-intermediary-build/gcc/gen-protos gcc && \
 make -j${PROCS} && \
 make install && \
 if [ -f ${DSTDIR}/bin/m68hc11-gcc.exe ] ; then
@@ -256,7 +252,8 @@ fi && \
 if [ -f ${DSTDIR}/bin/m68hc11-gcc-3.3.6-* ] ; then
 	rm -f ${DSTDIR}/bin/m68hc11-gcc-3.3.6-*
 fi && \
-for i in cpp gcc gccbug gcov ; do \
+rm -f ${DSTDIR}/bin/*gccbug*
+for i in cpp gcc gcov ; do \
 	ln -s mc9s12x-$i.exe ${DSTDIR}/bin/m68hc11-$i.exe
 	ln -s mc9s12x-$i.exe ${DSTDIR}/bin/m68hc12-$i.exe
 done && \
@@ -376,23 +373,23 @@ fi
 
 function cleanup {
 	echo "Cleaning out build directories"
-	clean_binutils
-	clean_gcc
-	clean_newlib
-#clean_dest
+	clean_binutils_build_dir
+	clean_gcc_build_dir
+	clean_newlib_build_dir
+	clean_dest_dir
 	echo "All build dirs cleaned out"
 }
 
 function full_cleanup {
 	echo "Cleaning out sources and build directories"
-	clean_binutils
-	clean_gcc
-	clean_newlib
-	clean_zips
-	clean_gcc_sources
-	clean_newlib_sources
-	clean_binutils_sources
-	clean_dest
+	clean_binutils_build_dir
+	clean_gcc_build_dir
+	clean_newlib_build_dir
+	clean_zip_dir
+	clean_gcc_source_dir
+	clean_newlib_source_dir
+	clean_binutils_source_dir
+	clean_dest_dir
 	rm -f ${CWD}/mc9s12x-toolchain.iss
 	rm -f ${CWD}/BSTAMP
 	echo "All source and build dirs cleaned out"
@@ -401,42 +398,61 @@ function full_cleanup {
 function download_win32 {
 pushd ${SRCDIR}/support >/dev/null
 echo "Downloading windows binaries from sourceforge"
-wget -cnv http://sourceforge.net/projects/gnuwin32/files/gawk/3.1.6-1/gawk-3.1.6-1-bin.zip/download -O gawk-3.1.6-1-bin.zip
-wget -cnv http://sourceforge.net/projects/gnuwin32/files/bc/1.06-2/bc-1.06-2-bin.zip/download -O bc-1.06-2-bin.zip
-wget -cnv http://sourceforge.net/projects/gnuwin32/files/bc/1.06-2/bc-1.06-2-dep.zip/download -O bc-1.06-2-dep.zip
-wget -cnv http://sourceforge.net/projects/gnuwin32/files/zlib/1.2.3/zlib-1.2.3-bin.zip/download -O zlib-1.2.3-bin.zip
-wget -cnv http://sourceforge.net/projects/gnuwin32/files/coreutils/5.3.0/coreutils-5.3.0-bin.zip/download -O coreutils-5.3.0-bin.zip
-wget -cnv http://sourceforge.net/projects/gnuwin32/files/coreutils/5.3.0/coreutils-5.3.0-dep.zip/download -O coreutils-5.3.0-dep.zip
-wget -cnv http://sourceforge.net/projects/gnuwin32/files/libintl/0.14.4/libintl-0.14.4-bin.zip/download -O libintl-0.14.4-bin.zip
-wget -cnv http://sourceforge.net/projects/gnuwin32/files/make/3.81/make-3.81-bin.zip/download -O make-3.81-bin.zip
-wget -cnv http://sourceforge.net/projects/gnuwin32/files/which/2.20/which-2.20-bin.zip/download -O which-2.20-bin.zip
+if [ ! -f gawk-3.1.6-1-bin.zip ] ; then
+	wget -cnv http://sourceforge.net/projects/gnuwin32/files/gawk/3.1.6-1/gawk-3.1.6-1-bin.zip/download -O gawk-3.1.6-1-bin.zip
+fi
+if [ ! -f bc-1.06-2-bin.zip ] ; then
+	wget -cnv http://sourceforge.net/projects/gnuwin32/files/bc/1.06-2/bc-1.06-2-bin.zip/download -O bc-1.06-2-bin.zip
+fi
+if [ ! -f bc-1.06-2-dep.zip ] ; then
+	wget -cnv http://sourceforge.net/projects/gnuwin32/files/bc/1.06-2/bc-1.06-2-dep.zip/download -O bc-1.06-2-dep.zip
+fi
+if [ ! -f zlib-1.2.3-bin.zip ] ; then
+	wget -cnv http://sourceforge.net/projects/gnuwin32/files/zlib/1.2.3/zlib-1.2.3-bin.zip/download -O zlib-1.2.3-bin.zip
+fi
+if [ ! -f coreutils-5.3.0-bin.zip ] ; then
+	wget -cnv http://sourceforge.net/projects/gnuwin32/files/coreutils/5.3.0/coreutils-5.3.0-bin.zip/download -O coreutils-5.3.0-bin.zip
+fi
+if [ ! -f coreutils-5.3.0-dep.zip ] ; then
+	wget -cnv http://sourceforge.net/projects/gnuwin32/files/coreutils/5.3.0/coreutils-5.3.0-dep.zip/download -O coreutils-5.3.0-dep.zip
+fi
+if [ ! -f libintl-0.14.4-bin.zip ] ; then
+	wget -cnv http://sourceforge.net/projects/gnuwin32/files/libintl/0.14.4/libintl-0.14.4-bin.zip/download -O libintl-0.14.4-bin.zip
+fi
+if [ ! -f make-3.81-bin.zip ] ; then
+	wget -cnv http://sourceforge.net/projects/gnuwin32/files/make/3.81/make-3.81-bin.zip/download -O make-3.81-bin.zip
+fi
+if [ ! -f which-2.20-bin.zip ] ; then
+	wget -cnv http://sourceforge.net/projects/gnuwin32/files/which/2.20/which-2.20-bin.zip/download -O which-2.20-bin.zip
+fi
 echo "Complete!"
 popd >/dev/null
 }
 
-function clean_binutils {
+function clean_binutils_build_dir {
 if [ -d ${BUILDDIR} ] ; then
 	pushd ${BUILDDIR} >/dev/null
-	if [ -d mc9s12x-direct-build ] ; then
-		rm -rf mc9s12x-direct-build
+	if [ -d binutils-mc9s12x-direct-build ] ; then
+		rm -rf binutils-mc9s12x-direct-build
 	fi
-	if [ -d mc9s12x-cross-build ] ; then
-		rm -rf mc9s12x-cross-build
+	if [ -d binutils-mc9s12x-cross-build ] ; then
+		rm -rf binutils-mc9s12x-cross-build
 	fi
-	if [ -d xgate-cross-build ] ; then
-		rm -rf xgate-cross-build
+	if [ -d binutils-xgate-cross-build ] ; then
+		rm -rf binutils-xgate-cross-build
 	fi
 	popd >/dev/null
 fi
 }
 
-function clean_binutils_sources {
+function clean_binutils_source_dir {
 pushd ${SRCDIR} >/dev/null
 rm -rf ${BINUTILS_DIR}
+rm -rf ${BINUTILS_TAR}
 popd >/dev/null
 }
 
-function dl_binutils {
+function dl_binutils_sources {
 # checkout seank's FreeScale-s12x-binutils
 pushd ${SRCDIR} >/dev/null
 md5sum --status -c ${BINUTILS_TAR}.md5
@@ -454,27 +470,31 @@ fi && \
 popd >/dev/null 
 }
 
-function clean_gcc {
-pushd ${BUILDDIR} >/dev/null
-rm -rf gcc-*
-if [ -d gcc-intermediary-build ] ; then
-	rm -rf gcc-intermediary-build
+function clean_gcc_build_dir {
+if [ -d ${BUILDDIR} ] ; then
+	pushd ${BUILDDIR} >/dev/null
+	rm -rf gcc-*
+	if [ -d gcc-intermediary-build ] ; then
+		rm -rf gcc-intermediary-build
+	fi
+	if [ -d gcc-cross-build ] ; then
+		rm -rf gcc-cross-build
+	fi
+	popd >/dev/null
 fi
-if [ -d gcc-cross-build ] ; then
-	rm -rf gcc-cross-build
-fi
-popd >/dev/null
 }
 
-function clean_gcc_sources {
+function clean_gcc_source_dir {
 # checkout seank's repo for gcc
-pushd ${SRCDIR} >/dev/null
-rm -rf gcc-*
-rm -rf ${GCC_DIR}
-popd >/dev/null
+if [ -d ${SRCDIR} ] ; then
+	pushd ${SRCDIR} >/dev/null
+	rm -rf gcc-*
+	rm -rf ${GCC_DIR}
+	popd >/dev/null
+fi
 }
 
-function dl_gcc {
+function dl_gcc_sources {
 pushd ${SRCDIR} >/dev/null
 wget -q -c ${GCC_URI}/md5.sum -O - |grep ${GCC_TAR} |md5sum --status -c -
 if [ ${RESULT} -ne 0 ] ; then
@@ -494,26 +514,28 @@ fi && \
 popd >/dev/null
 }
 
-function clean_newlib {
-pushd ${BUILDDIR} >/dev/null
-# I used the sources from newlib-m68hc1x from ubuntu/debian
-if [ -d newlib-build ] ; then
-	rm -rf newlib-build
+function clean_newlib_build_dir {
+if [ -d ${BUILDDIR} ] ; then
+	pushd ${BUILDDIR} >/dev/null
+	# I used the sources from newlib-m68hc1x from ubuntu/debian
+	if [ -d newlib-build ] ; then
+		rm -rf newlib-build
+	fi
+	popd >/dev/null
 fi
-popd >/dev/null
 }
 
-function clean_newlib_sources {
+function clean_newlib_source_dir {
 pushd ${SRCDIR} >/dev/null
 	rm -rf ${NEWLIB_DIR}
 popd >/dev/null
 }
 
-function clean_dest {
+function clean_dest_dir {
 rm -rf ${DSTDIR}
 }
 
-function dl_newlib {
+function dl_newlib_sources {
 pushd ${SRCDIR} >/dev/null
 if [ ! -d ${NEWLIB_DIR} ] ; then
     git clone ${NEWLIB_GIT_URL} ${NEWLIB_DIR}
@@ -525,8 +547,8 @@ fi
 popd >/dev/null
 }
 
-function clean_zips {
-rm -f ${BUILDDIR}/support/*.zip
+function clean_zip_dir {
+rm -f ${SRCDIR}/support/*.zip
 }
 
 function add_win32_pkgs {
@@ -566,10 +588,10 @@ mc9s12x-ToolChain_win${BITS}_${BSTAMP}.${MICRO}.exe should be in the ${CWD}/Outp
 case ${2} in
 	all) 
 	setup
-	dl_binutils
-	dl_gcc
-	dl_newlib
-	#download_win32
+	dl_binutils_sources
+	dl_gcc_sources
+	dl_newlib_sources
+	download_win32
 	build_toolchain 
 	add_win32_pkgs
 	build_win32_pkg
@@ -583,22 +605,22 @@ case ${2} in
 	;;
 	get_pre_reqs)
 	setup
-	dl_binutils
-	dl_gcc
-	dl_newlib
+	dl_binutils_sources
+	dl_gcc_sources
+	dl_newlib_sources
 	download_win32
 	;;
 	get_binutils)
-	dl_binutils
+	dl_binutils_sources
 	;;
 	get_gcc)
-	dl_gcc
+	dl_gcc_sources
 	;;
 	get_newlib)
-	dl_newlib
+	dl_newlib_sources
 	;;
 	buildpkg)
-	#download_win32
+	download_win32
 	add_win32_pkgs
 	build_win32_pkg
 	;;
@@ -612,3 +634,5 @@ case ${2} in
 	warn_user "Invalid args, need <32|64> <all|get_pre_reqs|buildpkg|clean|realclean>"
 	;;
 esac
+
+export PATH=${ORIG_PATH}
