@@ -135,7 +135,7 @@ fi
 mkdir binutils-mc9s12x-cross-build 
 pushd binutils-mc9s12x-cross-build >/dev/null
 # . cross${BITS}
-${SRCDIR}/${BINUTILS_DIR}/configure --with-sysroot=/usr/m68hc11 --with-lib-path=/usr/m68hc11/lib --host=${TARGET_ARCH}-${SUFFIX} --target=m68hc11 --enable-targets=m68hc11,m68hc12,xgate --disable-nls  --program-prefix=mc9s12x- --prefix=${DSTDIR} && \
+${SRCDIR}/${BINUTILS_DIR}/configure --host=${TARGET_ARCH}-${SUFFIX} --target=m68hc11 --enable-targets=m68hc11,m68hc12,xgate --disable-nls  --program-prefix=mc9s12x- --prefix=${DSTDIR} && \
 make -j${PROCS} && \
 make install && \
 for i in addr2line ar as c++filt elfedit gprof ld.bfd ld nm objcopy objdump ranlib readelf size strings strip ; do \
@@ -166,7 +166,7 @@ fi
 mkdir binutils-xgate-cross-build
 pushd binutils-xgate-cross-build >/dev/null
 # . cross${BITS}
-${SRCDIR}/${BINUTILS_DIR}/configure --with-sysroot=/usr/xgate --with-lib-path=/usr/xgate/lib --host=${TARGET_ARCH}-${SUFFIX} --target=xgate --enable-targets=m68hc11,m68hc12,xgate --program-prefix=xgate- --disable-nls --prefix=${DSTDIR} && \
+${SRCDIR}/${BINUTILS_DIR}/configure --host=${TARGET_ARCH}-${SUFFIX} --target=xgate --enable-targets=m68hc11,m68hc12,xgate --program-prefix=xgate- --disable-nls --prefix=${DSTDIR} && \
 make -j${PROCS} && \
 make install && \
 # . uncross \
