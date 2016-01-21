@@ -230,9 +230,11 @@ pushd gcc-cross-build >/dev/null
 # intermediary one being present, so build that one first
 OLDPATH="${PATH}"
 export PATH="${DSTDIR}"/intermediary/usr/bin:"${PATH}"
-"${SRCDIR}"/"${GCC_DIR}"/configure --build="${HOST_ARCH}"-pc-linux-gnu --host="${TARGET_ARCH}"-"${SUFFIX}" --target=m68hc11 --program-prefix=mc9s12x- --disable-nls --without-headers --with-gnu-as --with-gnu-ld --disable-checking --enable-languages=c --prefix=/usr --infodir=/usr/share/info --mandir=/usr/share/man && \
+#"${SRCDIR}"/"${GCC_DIR}"/configure --build="${HOST_ARCH}"-pc-linux-gnu --host="${TARGET_ARCH}"-"${SUFFIX}" --target=m68hc11 --program-prefix=mc9s12x- --disable-nls --without-headers --with-gnu-as --with-gnu-ld --disable-checking --enable-languages=c --prefix=/usr --infodir=/usr/share/info --mandir=/usr/share/man && \
+"${SRCDIR}"/"${GCC_DIR}"/configure --build="${HOST_ARCH}"-pc-linux-gnu --host="${TARGET_ARCH}"-"${SUFFIX}" --target=m68hc11 --program-prefix=mc9s12x- --disable-nls --without-headers --with-gnu-as --with-gnu-ld --disable-checking --enable-languages=c --prefix=${DSTDIR}/usr --infodir=${DSTDIR}/usr/share/info --mandir=${DSTDIR}/usr/share/man && \
 make -j"${PROCS}" && \
-make install-gcc prefix="${DSTDIR}"/usr infodir="${DSTDIR}"/usr/share/info mandir="${DSTDIR}"/usr/share/man && \
+#make install-gcc prefix="${DSTDIR}"/usr infodir="${DSTDIR}"/usr/share/info mandir="${DSTDIR}"/usr/share/man && \
+make install-gcc  && \
 if [ -f "${DSTDIR}"/usr/bin/m68hc11-gcc.exe ] ; then
 	mv "${DSTDIR}"/usr/bin/m68hc11-gcc.exe "${DSTDIR}"/usr/bin/mc9s12x-gcc.exe
 fi && \
