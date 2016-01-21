@@ -190,9 +190,9 @@ export PATH="${DSTDIR}"/intermediary/usr/bin:"${PATH}"
 # GCC needs to be done twice.  Once as a native linux->m68hc11 compiler, and 
 # then as a cross compiled win32->m68hc11 compiler, which depends on the 
 # intermediary one being present, so build that one first
-"${SRCDIR}"/"${GCC_DIR}"/configure --target=m68hc11 --program-prefix=mc9s12x- --disable-nls --with-gnu-as --with-gnu-ld --disable-checking --without-headers --enable-languages=c --prefix=/usr --infodir=/usr/share/info --mandir=/usr/share/man && \
+"${SRCDIR}"/"${GCC_DIR}"/configure --target=m68hc11 --program-prefix=mc9s12x- --disable-nls --with-gnu-as --with-gnu-ld --disable-checking --without-headers --enable-languages=c --prefix=${DSTDIR}/intermediary/usr && \
 make -j"${PROCS}" &&
-make install prefix="${DSTDIR}"/intermediary/usr mandir="${DSTDIR}"/intermediary/usr/share/man infodir="${DSTDIR}"/intermediary/usr/share/info && \
+make install && \
 mv "${DSTDIR}"/intermediary/usr/bin/m68hc11-gcc "${DSTDIR}"/intermediary/usr/bin/mc9s12x-gcc && \
 mv "${DSTDIR}"/intermediary/usr/bin/m68hc11-cpp "${DSTDIR}"/intermediary/usr/bin/mc9s12x-cpp && \
 for i in gcc cpp gcov ; do \
