@@ -1,0 +1,20 @@
+--- gcc-3.3.6/gcc/gcc.c	2004-04-01 11:55:17.000000000 -0500
++++ gcc-3.3.6-patched/gcc/gcc.c	2016-01-22 12:29:38.963752713 -0500
+@@ -6053,9 +6053,13 @@
+ 
+   /* Read specs from a file if there is one.  */
+ 
+-  machine_suffix = concat (spec_machine, dir_separator_str,
+-			   spec_version, dir_separator_str, NULL);
+-  just_machine_suffix = concat (spec_machine, dir_separator_str, NULL);
++  //machine_suffix = concat (spec_machine, dir_separator_str,
++  //			   spec_version, dir_separator_str, NULL);
++  static const char tmp_dir_separator_str[] = { '/', 0 };
++  machine_suffix = concat (spec_machine, tmp_dir_separator_str,
++			   spec_version, tmp_dir_separator_str, NULL);
++  //just_machine_suffix = concat (spec_machine, dir_separator_str, NULL);
++  just_machine_suffix = concat (spec_machine, tmp_dir_separator_str, NULL);
+ 
+   specs_file = find_a_file (&startfile_prefixes, "specs", R_OK, 0);
+   /* Read the specs file unless it is a default one.  */
+ 
