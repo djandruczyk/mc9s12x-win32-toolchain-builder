@@ -133,11 +133,9 @@ if [ -d binutils-mc9s12x-cross-build ] ; then
 fi
 mkdir binutils-mc9s12x-cross-build 
 pushd binutils-mc9s12x-cross-build >/dev/null
-#"${SRCDIR}"/"${BINUTILS_DIR}"/configure --host="${TARGET_ARCH}"-"${SUFFIX}" --target=m68hc11 --enable-targets=m68hc11,m68hc12,xgate --disable-nls  --program-prefix=mc9s12x- --prefix=/usr --infodir=/usr/share/info --mandir=/usr/share/man && \
-"${SRCDIR}"/"${BINUTILS_DIR}"/configure --host="${TARGET_ARCH}"-"${SUFFIX}" --target=m68hc11 --enable-targets=m68hc11,m68hc12,xgate --disable-nls  --program-prefix=mc9s12x- --prefix=${DSTDIR}/usr --infodir=${DSTDIR}/usr/share/info --mandir=${DSTDIR}/usr/share/man && \
+"${SRCDIR}"/"${BINUTILS_DIR}"/configure --host="${TARGET_ARCH}"-"${SUFFIX}" --target=m68hc11 --enable-targets=m68hc11,m68hc12,xgate --disable-nls  --program-prefix=mc9s12x- --prefix=/usr --infodir=/usr/share/info --mandir=/usr/share/man && \
 make -j"${PROCS}" && \
-#make install prefix="${DSTDIR}"/usr mandir="${DSTDIR}"/usr/share/man infodir="${DSTDIR}"/usr/share/info && \
-make install && \
+make install prefix="${DSTDIR}"/usr mandir="${DSTDIR}"/usr/share/man infodir="${DSTDIR}"/usr/share/info && \
 for i in addr2line ar as c++filt elfedit gprof ld.bfd ld nm objcopy objdump ranlib readelf size strings strip ; do \
 	ln -s mc9s12x-$i.exe "${DSTDIR}"/usr/bin/m68hc11-$i.exe && \
 	ln -s mc9s12x-$i.exe "${DSTDIR}"/usr/bin/m68hc12-$i.exe
@@ -164,11 +162,9 @@ if [ -d binutils-xgate-cross-build ] ; then
 fi
 mkdir binutils-xgate-cross-build
 pushd binutils-xgate-cross-build >/dev/null
-#"${SRCDIR}"/"${BINUTILS_DIR}"/configure --host="${TARGET_ARCH}"-"${SUFFIX}" --target=xgate --enable-targets=m68hc11,m68hc12,xgate --program-prefix=xgate- --disable-nls --prefix=/usr --infodir=/usr/share/info --mandir=/usr/share/man && \
-"${SRCDIR}"/"${BINUTILS_DIR}"/configure --host="${TARGET_ARCH}"-"${SUFFIX}" --target=xgate --enable-targets=m68hc11,m68hc12,xgate --program-prefix=xgate- --disable-nls --prefix=${DSTDIR}/usr --infodir=${DSTDIR}/usr/share/info --mandir=${DSTDIR}/usr/share/man && \
+"${SRCDIR}"/"${BINUTILS_DIR}"/configure --host="${TARGET_ARCH}"-"${SUFFIX}" --target=xgate --enable-targets=m68hc11,m68hc12,xgate --program-prefix=xgate- --disable-nls --prefix=/usr --infodir=/usr/share/info --mandir=/usr/share/man && \
 make -j"${PROCS}" && \
-#make install prefix="${DSTDIR}"/usr mandir="${DSTDIR}"/usr/share/man infodir="${DSTDIR}"/usr/share/info && \
-make install && \
+make install prefix="${DSTDIR}"/usr mandir="${DSTDIR}"/usr/share/man infodir="${DSTDIR}"/usr/share/info && \
 popd >/dev/null && \
 popd >/dev/null 
 if [ $? -eq 0 ]; then
