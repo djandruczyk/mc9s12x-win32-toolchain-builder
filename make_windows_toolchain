@@ -25,6 +25,7 @@ GCC_TAR="gcc-3.3.6.tar.bz2"
 GCC_DIR="gcc-3.3.6"
 GCC_PATCH_1="config.gcc.patch"
 GCC_PATCH_2="seank_rollup_20131231.patch"
+GCC_PATCH_3="gcc.c_install_path.patch"
 NEWLIB_DIR="s12x-newlib"
 NEWLIB_GIT_URL="http://gitlab.com/libreems-suite/s12x-newlib.git"
 
@@ -496,6 +497,7 @@ if [ ! -d "${GCC_DIR}" ] ; then
 		pushd "${GCC_DIR}" >/dev/null && \
 	    patch -p2 < "${PATCH_DIR}"/"${GCC_PATCH_1}" && \
 	    patch -p1 < "${PATCH_DIR}"/"${GCC_PATCH_2}" && \
+	    patch -p1 < "${PATCH_DIR}"/"${GCC_PATCH_3}" && \
 		touch gcc/c-parse.c && \
 		touch .patched
 		popd >/dev/null
