@@ -29,7 +29,6 @@ LicenseFile=.\LICENSE
 Name: modifypath; Description: Add application directory to your environmental path, which is required to easily call GCC without needing absolute paths;  Flags:
 
 [Files]
-;Source: "z:\opt\crossroot64\bin\*zlib*.dll"; DestDir: "{app}\bin"; Flags: ignoreversion                                                       
 Source: "z:_DSTDIR_\usr\*.*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
 Source: "z:_DSTDIR_\tools\*.*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
 
